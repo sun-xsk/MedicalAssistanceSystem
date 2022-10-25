@@ -3,7 +3,7 @@ import routes from './routes/routes'
 import './App.css'
 
 function App() {
-  let router = useRoutes(routes)
+  const router = useRoutes(routes)
 
   return (
     <div className="App">
