@@ -13,32 +13,37 @@ export function Part1() {
     <div className="Part1">
       <div className="p-header">
         <Link to="/home" className="back-home">
-          <Image height={25} src={svg} preview={false} />
+          <Image height={17} src={svg} preview={false} />
           <div className="txt">
             This is a line of statements used for placeholder
           </div>
         </Link>
       </div>
-      <div className="p-picList">
-        <div className="showPic">
-          {testPicList.map((item) => {
-            return <div className="pic" key={item}></div>;
-          })}
+      <div className="toolBar">
+      <div className="singleTool">
+          <MenuFoldOutlined />
+          <div className="txt">顺滑切换图层</div>
+        </div>
+        <div className="singleTool">
+          <MenuFoldOutlined />
+          <div className="txt">顺滑切换</div>
+        </div>
+        <div className="singleTool">
+          <MenuFoldOutlined />
+          <div className="txt">顺滑</div>
+        </div>
+        <div className="singleTool">
+          <MenuFoldOutlined />
+          <div className="txt">顺滑切</div>
         </div>
       </div>
+
       <div className="p-detail">
-        <div className="toolBar">
-          <div className="singleTool">
-            <MenuFoldOutlined />
-            <div className="txt">顺滑切换图层</div>
-          </div>
-          <div className="singleTool">
-            <MenuFoldOutlined />
-            <div className="txt">顺滑切换图层</div>
-          </div>
-          <div className="singleTool">
-            <MenuFoldOutlined />
-            <div className="txt">顺滑切换图层</div>
+        <div className="p-picList">
+          <div className="showPic">
+            {testPicList.map((item) => {
+              return <div className="pic" key={item}></div>;
+            })}
           </div>
         </div>
         <div className="detailPic"></div>

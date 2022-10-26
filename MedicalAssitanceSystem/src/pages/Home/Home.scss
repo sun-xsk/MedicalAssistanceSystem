@@ -15,7 +15,7 @@
     color: #dddddd;
     @include flexBox(center);
     .h-center {
-      width: 68%;
+      // width: 68%;
       height: 60%;
       @include flexBox(center);
       .h-h-txt {
