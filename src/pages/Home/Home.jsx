@@ -10,7 +10,7 @@ export default function Home() {
     <div className="Home">
       <div className="h-header">
         <div className="h-center">
-          <Image height={80} src={Svg} ClassName="h-h-svg" preview={false} />
+          <Image height={80} src={Svg} className="h-h-svg" preview={false} />
           <div className="h-h-txt">
             This is a line of statements used for placeholder
           </div>

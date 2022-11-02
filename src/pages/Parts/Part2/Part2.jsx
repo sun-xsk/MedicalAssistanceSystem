@@ -1,7 +1,12 @@
-import React from 'react'
+import React, { useState } from "react";
+
 
 export function Part2() {
+
+
   return (
-    <div>Part2</div>
-  )
+    <div className="Part2">
+      part2
+    </div>
+  );
 }
