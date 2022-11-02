@@ -20,4 +20,12 @@ cornerstoneTools.init()
 // cornerstoneTools.setToolActive('StackScrollMouseWheel', {})
 
 
-export { cornerstone, cornerstoneWADOImageLoader, dicomParser, cornerstoneTools, getImagePixelModule, metaDataProvider, extend }
+export {
+    cornerstone,
+    cornerstoneWADOImageLoader,
+    dicomParser,
+    cornerstoneTools,
+    getImagePixelModule,
+    metaDataProvider,
+    extend,
+}
