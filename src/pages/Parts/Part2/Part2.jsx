@@ -6,7 +6,7 @@ export function Part2() {
 
   return (
     <div className="Part2">
-      part2
+      start
     </div>
   );
 }
