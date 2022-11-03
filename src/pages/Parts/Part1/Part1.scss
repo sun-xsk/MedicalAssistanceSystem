@@ -66,11 +66,11 @@
     height: 81%;
     background-color: #0d1117;
     @include flexBox();
-    // 设置中间展示图片列表的样式
+    // 设置图片列表的样式
     .p-picList {
       width: 18%;
       height: 100%;
-      background-color: #000;
+      background-color: #0d1117;
       @include flexBox(center, center);
       // 左边图片列表
       .showPic {
@@ -104,7 +104,7 @@
       /* 滚动条里面轨道 */
       .showPic::-webkit-scrollbar-track {
         border-radius: 0;
-        background: rgb(15, 15, 15);
+        background: rgba(43, 43, 43, 0.5);
       }
     }
     // 展示大图
