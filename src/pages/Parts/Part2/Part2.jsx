@@ -20,9 +20,9 @@ export function Part2() {
   let fileImgId = '';
   let result = undefined;
   const mouseToolChain = [
-    { tool: "Scissor", func: cornerstoneTools.FreehandScissorsTool, config: {} },
-    { tool: "LRflip", func: cornerstoneTools },
-    { tool: "UDflip", func: cornerstoneTools }
+    { name: "Scissor", func: cornerstoneTools.FreehandScissorsTool, config: {} },
+    { name: "LRflip", func: cornerstoneTools },
+    { name: "UDflip", func: cornerstoneTools }
   ]
 
   cornerstone.metaData.addProvider(function (type, imageId) {
@@ -76,15 +76,15 @@ export function Part2() {
 
   const chooseTool = (name) => {
     return () => {
-      mouseToolChain.map((tool, idx, tools) => {
-        if (mouseToolChain[i].tool === name) {
-          cornerstoneTools.addTool(mouseToolChain[i].func);
-          cornerstoneTools.setToolActive(mouseToolChain[i].tool, {
+      mouseToolChain.map((tool) => {
+        if (tool.name === name) {
+          cornerstoneTools.addTool(tool.func);
+          cornerstoneTools.setToolActive(tool.tool, {
             mouseButtonMask: 1
           })
         } else {
-          cornerstone.addTool(mouseToolChain[i].func);
-          cornerstone.setToolPassive(mouseToolChain[i].tool, {
+          cornerstone.addTool(tool.func);
+          cornerstone.setToolPassive(tool.tool, {
             mouseButtonMask: 1
           })
         }
