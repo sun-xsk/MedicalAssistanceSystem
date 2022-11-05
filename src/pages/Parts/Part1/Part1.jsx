@@ -8,9 +8,9 @@ import {
   extend,
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
+ 
 
-
-import Header from "./Header/Header";
+import Header from "../Header/Header";
 import { MenuFoldOutlined } from "@ant-design/icons";
 import "./Part1.scss";
 

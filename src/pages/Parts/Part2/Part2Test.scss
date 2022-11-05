@@ -1,6 +1,6 @@
 @import "../../../util/scss/all.scss";
 
-.Part1 {
+.Part2Test {
   position: absolute;
   width: 100%;
   height: 100%;
@@ -60,6 +60,7 @@
     }
     .singleTool:hover {
       color: rgba(203, 201, 196, 0.6);
+      cursor: pointer;
     }
     .uploadTool{
       cursor: pointer;
