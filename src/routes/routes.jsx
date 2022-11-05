@@ -1,5 +1,5 @@
 import Home from "../pages/Home/Home";
-import { Part1, Part2 } from "../pages/Parts";
+import { Part1, Part2, Part2Test } from "../pages/Parts";
 import { Navigate } from "react-router-dom";
 
 export default [
@@ -13,7 +13,7 @@ export default [
   },
   {
     path: "part2",
-    element: <Part2 />,
+    element: <Part2Test />,
   },
   {
     path: "/",
