@@ -133,14 +133,30 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      position: relative;
+      .position{
+        position: absolute;
+        left: 15px;
+        bottom: 15px;
+        color: #00a4d9;
+      }
+      .viewPort{
+        position: absolute;
+        right: 15px;
+        bottom: 15px;
+        color: #00a4d9;
+      }
+      .detailPic{
+        position: relative;
+        height: 80vh;
+        width: 80vh;
+      }
     }
-    .detailPic{
-      height: 80vh;
-      width: 80vh;
-    }
+    
     .toolIcons{
       font-size: 30px;
     }
+   
 
   }
 }
