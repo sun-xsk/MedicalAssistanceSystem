@@ -12,15 +12,14 @@ import {
 import Header from "../Header/Header";
 import "./Part2Test.scss";
 
+// 添加对应的工具信息
 const mouseToolChain = [
   { name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
   {
     name: "ZoomMouseWheel",
-    func: cornerstoneTools.ZoomMouseWheelTool,
+    func: cornerstoneTools.AngleTool,
     config: {},
   },
-  { name: "Pan", func: cornerstoneTools.PanTool, config: {} },
-  { name: "Magnify", func: cornerstoneTools.MagnifyTool, config: {} },
   { name: "Angle", func: cornerstoneTools.AngleTool, config: {} },
 ];
 
@@ -35,6 +34,7 @@ export function Part2Test() {
   let fileImgId = ""; // 当前选中的 DCM文件 imageId
   let imageIds = [];
 
+  //   判断是需要哪一个工具
   function chooseTool(name) {
     return () => {
       for (let i = 0; i < mouseToolChain.length; i++) {
@@ -52,23 +52,16 @@ export function Part2Test() {
       }
     };
   }
-
-  //   上下翻转图片
+  //   上下左右翻转图片
   function upsideDownTb() {
-    const element = document.getElementById("test");
-    cornerstone.enable(element);
-    result = cornerstone.getViewport(element);
     upTb = !upTb;
-    cornerstone.setViewport(element, {
+    cornerstone.setViewport(imgRef.current, {
       vflip: upTb,
     });
   }
   function upsideDownLr() {
-    const element = document.getElementById("test");
-    cornerstone.enable(element);
-    result = cornerstone.getViewport(element);
     upLr = !upLr;
-    cornerstone.setViewport(element, {
+    cornerstone.setViewport(imgRef.current, {
       hflip: upLr,
     });
   }
@@ -84,7 +77,6 @@ export function Part2Test() {
   function uploadFiles() {
     fileRef.current.click();
   }
-
   //   加载图片
   function loadFiles(e) {
     let files = e.target.files;
@@ -146,7 +138,6 @@ export function Part2Test() {
           <div className="txt">图像加强</div>
         </button>
 
-        {/* chooseTool("ZoomMouseWheel") */}
         <button className="singleTool" onClick={chooseTool("ZoomMouseWheel")}>
           <span className="iconfont toolIcons">&#xe7ca;</span>
           <div className="txt">图像去噪</div>
@@ -192,7 +183,6 @@ export function Part2Test() {
         <div className="detailPicBox">
           <div
             className="detailPic"
-            id="test"
             onContextMenu={() => false}
             onMouseDown={() => false}
             ref={imgRef}
