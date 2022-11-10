@@ -8,6 +8,7 @@ import {
   extend,
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
+import {connect} from "../../../util/request/index"
 
 import Header from "./Header/Header";
 import { MenuFoldOutlined } from "@ant-design/icons";
@@ -56,6 +57,21 @@ export function Part1() {
 
   let imageIds = [];
 
+  useEffect(() => {
+    cornerstone.enable(imgRef.current);
+    cornerstone.enable(picRef.current)
+    const StackScrollMouseWheelTool =
+      cornerstoneTools.StackScrollMouseWheelTool;
+    cornerstoneTools.addTool(StackScrollMouseWheelTool);
+    cornerstoneTools.setToolActive("StackScrollMouseWheel", {});
+    extend();
+    (
+      async function(){
+        let result = await connect()
+        console.log(result)
+      }
+    )()
+  }, []);
   function chooseTool(name) {
     return () => {
       for (let i = 0; i < mouseToolChain.length; i++) {
@@ -131,17 +147,6 @@ export function Part1() {
     }
 
   }
-
-  useEffect(() => {
-    cornerstone.enable(imgRef.current);
-    cornerstone.enable(picRef.current)
-    const StackScrollMouseWheelTool =
-      cornerstoneTools.StackScrollMouseWheelTool;
-    cornerstoneTools.addTool(StackScrollMouseWheelTool);
-    cornerstoneTools.setToolActive("StackScrollMouseWheel", {});
-    extend();
-    
-  }, []);
   const handleMouseMove = (e) => {
     setPosition({
       x: e.nativeEvent.offsetX,
@@ -154,10 +159,8 @@ export function Part1() {
   const handleWheel=()=>{
     if(imgRef.current && isShow){
       setViewPort(cornerstone.getViewport(imgRef.current)) 
-      console.log(cornerstone.getViewport(imgRef.current));
     }
   }
-
   return (
     <div className="Part1">
       <Header />
@@ -238,13 +241,13 @@ export function Part1() {
             {/* {ids.map((item) => {
               return <div className="pic" key={item}></div>;
             })} */}
-          <div className="pic" ref={picRef}></div>;
+          <div className="pic" ref={picRef} ></div>;
 
           </div>
         </div>
 
         <div className="detailPicBox" onMouseMove={(e) => handleMouseMove(e)} onWheel={handleWheel}>
-          <div className="detailPic" ref={imgRef}></div>
+          <div className="detailPic" ref={imgRef} ></div>
 
           {isShow ? (
             <div className="position">
