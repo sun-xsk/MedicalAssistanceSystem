@@ -12,7 +12,7 @@ import {
 import {
   uploadFile,
   testConnect,
-} from "../../../util/axios/httpUtil"
+} from "../../../util/request/httpUtil"
 
 import Header from "./Header/Header";
 import { MenuFoldOutlined } from "@ant-design/icons";
