@@ -8,11 +8,16 @@ import {
   extend,
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
-import {connect} from "../../../util/request/index"
+
+import {
+  uploadFile,
+  testConnect,
+} from "../../../util/axios/httpUtil"
 
 import Header from "./Header/Header";
 import { MenuFoldOutlined } from "@ant-design/icons";
 import "./Part1.scss";
+
 
 const mouseToolChain = [
   { name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
@@ -65,12 +70,6 @@ export function Part1() {
     cornerstoneTools.addTool(StackScrollMouseWheelTool);
     cornerstoneTools.setToolActive("StackScrollMouseWheel", {});
     extend();
-    (
-      async function(){
-        let result = await connect()
-        console.log(result)
-      }
-    )()
   }, []);
   function chooseTool(name) {
     return () => {
@@ -100,51 +99,69 @@ export function Part1() {
   function uploadFiles() {
     fileRef.current.click();
   }
-  var stack;
 
   function loadFiles(e) {
-    let files = e.target.files;
-    if (!files || !files.length) return;
-    for (let i = 1; i < files.length; i++) {
-      let file = files[i];
-      let read = new FileReader();
-      imageIds[i - 1] = "";
-      read.readAsArrayBuffer(file);
-      read.onload = function () {
-        result = dicomParser.parseDicom(new Uint8Array(this.result));
-        let url = "http://" + file.name;
-        fileImgId = "wadouri:" + url;
-        // imageIds.push(fileImgId)
-        imageIds[i - 1] = fileImgId;
-        //设置映射关系
-        cornerstoneWADOImageLoader.wadouri.dataSetCacheManager.add(url, result);
-        cornerstone.imageCache.putImageLoadObject(
-          fileImgId,
-          cornerstoneWADOImageLoader.wadouri.loadImageFromPromise(
-            new Promise((res) => {
-              res(result);
-            }),
-            fileImgId
-          )
-        );
+    let file=e.target.files
+    let formdata=new FormData()
+    formdata.append('file',file[1])
+    console.log(formdata.get('file'))
 
-        stack = {
-          currentImageIdIndex: 0,
-          imageIds,
-        };
+    testConnect()
+    .then(ret=>{
+      console.log(ret);
+    })
 
-        //加载dcm文件并缓存
-        cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
-          cornerstone.displayImage(imgRef.current, img);
-          cornerstone.displayImage(picRef.current, img);
+    uploadFile(formdata)
+    .then(ret=>{
+      console.log(ret);
+    })
+    .catch(err=>{
+      console.log(err)
+    })
+
+   
+    // let files = e.target.files;
+    // if (!files || !files.length) return;
+    // for (let i = 1; i < files.length; i++) {
+    //   let file = files[i];
+    //   let read = new FileReader();
+    //   imageIds[i - 1] = "";
+    //   read.readAsArrayBuffer(file);
+    //   read.onload = function () {
+    //     result = dicomParser.parseDicom(new Uint8Array(this.result));
+    //     let url = "http://" + file.name;
+    //     fileImgId = "wadouri:" + url;
+    //     // imageIds.push(fileImgId)
+    //     imageIds[i - 1] = fileImgId;
+    //     //设置映射关系
+    //     cornerstoneWADOImageLoader.wadouri.dataSetCacheManager.add(url, result);
+    //     cornerstone.imageCache.putImageLoadObject(
+    //       fileImgId,
+    //       cornerstoneWADOImageLoader.wadouri.loadImageFromPromise(
+    //         new Promise((res) => {
+    //           res(result);
+    //         }),
+    //         fileImgId
+    //       )
+    //     );
+
+    //     stack = {
+    //       currentImageIdIndex: 0,
+    //       imageIds,
+    //     };
+
+    //     //加载dcm文件并缓存
+    //     cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
+    //       cornerstone.displayImage(imgRef.current, img);
+    //       cornerstone.displayImage(picRef.current, img);
 
 
-          cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
-          cornerstoneTools.addToolState(imgRef.current, "stack", stack);
-        });
-      };
-      setIsShow(true);
-    }
+    //       cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
+    //       cornerstoneTools.addToolState(imgRef.current, "stack", stack);
+    //     });
+    //   };
+    //   setIsShow(true);
+    // }
 
   }
   const handleMouseMove = (e) => {
