@@ -9,15 +9,17 @@ import {
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
 
-import {
-  uploadFile,
+
+import { 
   testConnect,
-} from "../../../util/request/httpUtil"
+  getFileInfo,
+  uploadFile,
+  getFilePath} from "../../../util/api/httpUtil";
 
 import Header from "./Header/Header";
 import { MenuFoldOutlined } from "@ant-design/icons";
 import "./Part1.scss";
-
+import axios from "axios";
 
 const mouseToolChain = [
   { name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
@@ -50,27 +52,29 @@ const mouseToolChain = [
 ];
 
 export function Part1() {
-  const [ids, setIds] = useState([]);
+
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const fileRef = useRef(null);
   const imgRef = useRef(null);
   const picRef=useRef(null)
-  const [viewPort, setViewPort] = useState({voi:{windowWidth:'',windowCenter:''},scale:''});
+  const [viewPort, setViewPort] = useState({voi:{windowWidth:'',windowCenter:''},scale:0});
   const [isShow, setIsShow] = useState(false);
   let result = undefined; // 存储当前选中的 DCM文件解析后的 DataSet 对象
   let fileImgId = ""; // 当前选中的 DCM文件 imageId
 
-  let imageIds = [];
 
   useEffect(() => {
     cornerstone.enable(imgRef.current);
     cornerstone.enable(picRef.current)
     const StackScrollMouseWheelTool =
-      cornerstoneTools.StackScrollMouseWheelTool;
+    cornerstoneTools.StackScrollMouseWheelTool;
     cornerstoneTools.addTool(StackScrollMouseWheelTool);
     cornerstoneTools.setToolActive("StackScrollMouseWheel", {});
     extend();
+
   }, []);
+
+
   function chooseTool(name) {
     return () => {
       for (let i = 0; i < mouseToolChain.length; i++) {
@@ -100,69 +104,35 @@ export function Part1() {
     fileRef.current.click();
   }
 
-  function loadFiles(e) {
-    let file=e.target.files
+ async function loadFiles(e) {
+    let files=e.target.files
     let formdata=new FormData()
-    formdata.append('file',file[1])
-    console.log(formdata.get('file'))
-
-    testConnect()
-    .then(ret=>{
-      console.log(ret);
-    })
-
-    uploadFile(formdata)
-    .then(ret=>{
-      console.log(ret);
-    })
-    .catch(err=>{
-      console.log(err)
-    })
-
-   
-    // let files = e.target.files;
-    // if (!files || !files.length) return;
-    // for (let i = 1; i < files.length; i++) {
-    //   let file = files[i];
-    //   let read = new FileReader();
-    //   imageIds[i - 1] = "";
-    //   read.readAsArrayBuffer(file);
-    //   read.onload = function () {
-    //     result = dicomParser.parseDicom(new Uint8Array(this.result));
-    //     let url = "http://" + file.name;
-    //     fileImgId = "wadouri:" + url;
-    //     // imageIds.push(fileImgId)
-    //     imageIds[i - 1] = fileImgId;
-    //     //设置映射关系
-    //     cornerstoneWADOImageLoader.wadouri.dataSetCacheManager.add(url, result);
-    //     cornerstone.imageCache.putImageLoadObject(
-    //       fileImgId,
-    //       cornerstoneWADOImageLoader.wadouri.loadImageFromPromise(
-    //         new Promise((res) => {
-    //           res(result);
-    //         }),
-    //         fileImgId
-    //       )
-    //     );
-
-    //     stack = {
-    //       currentImageIdIndex: 0,
-    //       imageIds,
-    //     };
-
-    //     //加载dcm文件并缓存
-    //     cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
-    //       cornerstone.displayImage(imgRef.current, img);
-    //       cornerstone.displayImage(picRef.current, img);
-
-
-    //       cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
-    //       cornerstoneTools.addToolState(imgRef.current, "stack", stack);
-    //     });
-    //   };
-    //   setIsShow(true);
+    // for(let i=0;i<files.length;i++){
+    //   formdata.append('file',files[i])
     // }
-
+    formdata.append('file',files[0])
+    
+    let fileInfo=await getFileInfo(formdata)
+    let {PatientID,PatientAge,PatientAddress }=fileInfo.data
+    let filePath=await getFilePath(PatientID)
+    let data=filePath.data
+    let images=data[Object.keys(data)[0]]
+    let imageIds = images.map(item=>{
+      return "wadouri:"+item
+    })
+    console.log(imageIds);
+        let stack = {
+          currentImageIdIndex: 0,
+          imageIds,
+        };
+        cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
+          cornerstone.displayImage(imgRef.current, img);
+          cornerstone.displayImage(picRef.current, img);
+          cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
+        cornerstoneTools.addToolState(imgRef.current, "stack", stack);
+    
+    setIsShow(true);
+      })
   }
   const handleMouseMove = (e) => {
     setPosition({
@@ -259,7 +229,6 @@ export function Part1() {
               return <div className="pic" key={item}></div>;
             })} */}
           <div className="pic" ref={picRef} ></div>;
-
           </div>
         </div>
 
