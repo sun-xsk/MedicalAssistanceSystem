@@ -9,17 +9,16 @@ import {
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
 
-
-import { 
+import {
   testConnect,
   getFileInfo,
   uploadFile,
-  getFilePath} from "../../../util/api/httpUtil";
+  getFilePath,
+} from "../../../util/api/httpUtil";
 
 import Header from "./Header/Header";
 import { MenuFoldOutlined } from "@ant-design/icons";
 import "./Part1.scss";
-import axios from "axios";
 
 const mouseToolChain = [
   { name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
@@ -48,32 +47,35 @@ const mouseToolChain = [
     func: cornerstoneTools.FreehandScissorsTool,
     config: {},
   },
-  { name: "Brush", func: cornerstoneTools.BrushTool, },
+  { name: "Brush", func: cornerstoneTools.BrushTool },
 ];
 
 export function Part1() {
-
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const fileRef = useRef(null);
   const imgRef = useRef(null);
-  const picRef=useRef(null)
-  const [viewPort, setViewPort] = useState({voi:{windowWidth:'',windowCenter:''},scale:0});
+  const picRef = useRef(null);
+  const [viewPort, setViewPort] = useState({
+    voi: { windowWidth: "", windowCenter: "" },
+    scale: 0,
+  });
+  const [patientInfo,setPatientInfo] = useState({})
   const [isShow, setIsShow] = useState(false);
-  let result = undefined; // 存储当前选中的 DCM文件解析后的 DataSet 对象
-  let fileImgId = ""; // 当前选中的 DCM文件 imageId
-
+  let result = undefined; 
+  let fileImgId = ""; 
 
   useEffect(() => {
     cornerstone.enable(imgRef.current);
-    cornerstone.enable(picRef.current)
+    cornerstone.enable(picRef.current);
     const StackScrollMouseWheelTool =
-    cornerstoneTools.StackScrollMouseWheelTool;
+      cornerstoneTools.StackScrollMouseWheelTool;
     cornerstoneTools.addTool(StackScrollMouseWheelTool);
     cornerstoneTools.setToolActive("StackScrollMouseWheel", {});
     extend();
-
+    let str="1.3.6.1.4.1.14519.5.2.1.6919.4624.564189861532450849715051784042/7 .dcm"
+    let id=str.replace(/(.*\/)*([^.]+).*/ig,"$2");
+    console.log(id)
   }, []);
-
 
   function chooseTool(name) {
     return () => {
@@ -104,50 +106,66 @@ export function Part1() {
     fileRef.current.click();
   }
 
- async function loadFiles(e) {
-    let files=e.target.files
-    let formdata=new FormData()
-    // for(let i=0;i<files.length;i++){
-    //   formdata.append('file',files[i])
-    // }
-    formdata.append('file',files[0])
-    
-    let fileInfo=await getFileInfo(formdata)
-    let {PatientID,PatientAge,PatientAddress }=fileInfo.data
-    let filePath=await getFilePath(PatientID)
-    let data=filePath.data
-    let images=data[Object.keys(data)[0]]
-    let imageIds = images.map(item=>{
-      return "wadouri:"+item
+  async function loadFiles(e) {
+    let files = e.target.files;
+    let formdata = new FormData();
+    let demoData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formdata.append("file", files[i]);
+    }
+    demoData.append("file", files[0]);
+    console.log(formdata.getAll("file"));
+    uploadFile(formdata);
+
+    let fileInfo = await getFileInfo(demoData);
+    console.log(fileInfo.data);
+    setPatientInfo(fileInfo.data)
+    let {
+      PatientID,
+      PatientAge,
+      PatiendAddress
+    } = fileInfo.data
+    let filePath = await getFilePath(PatientID);
+    console.log('filePath',filePath);
+    let data = filePath.data;
+    let images = data[Object.keys(data)[0]];
+
+    //imageIds初始化及排序
+    let imageIds = images.map((item) => {
+      return "wadouri:" + item;
+    });
+    imageIds.sort((a,b)=>{
+      return a.replace(/(.*\/)*([^.]+).*/ig,"$2") - b.replace(/(.*\/)*([^.]+).*/ig,"$2")
     })
-    console.log(imageIds);
-        let stack = {
-          currentImageIdIndex: 0,
-          imageIds,
-        };
-        cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
-          cornerstone.displayImage(imgRef.current, img);
-          cornerstone.displayImage(picRef.current, img);
-          cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
-        cornerstoneTools.addToolState(imgRef.current, "stack", stack);
-    
-    setIsShow(true);
-      })
+
+    let stack = {
+      currentImageIdIndex: 0,
+      imageIds,
+    };
+    cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
+      cornerstone.displayImage(imgRef.current, img);
+      cornerstone.displayImage(picRef.current, img);
+      cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
+      cornerstoneTools.addToolState(imgRef.current, "stack", stack);
+
+      setIsShow(true);
+    });
   }
+ 
   const handleMouseMove = (e) => {
     setPosition({
       x: e.nativeEvent.offsetX,
       y: e.nativeEvent.offsetX,
     });
-    if(imgRef.current && isShow){
-      setViewPort(cornerstone.getViewport(imgRef.current)) 
+    if (imgRef.current && isShow) {
+      setViewPort(cornerstone.getViewport(imgRef.current));
     }
   };
-  const handleWheel=()=>{
-    if(imgRef.current && isShow){
-      setViewPort(cornerstone.getViewport(imgRef.current)) 
+  const handleWheel = () => {
+    if (imgRef.current && isShow) {
+      setViewPort(cornerstone.getViewport(imgRef.current));
     }
-  }
+  };
   return (
     <div className="Part1">
       <Header />
@@ -228,12 +246,16 @@ export function Part1() {
             {/* {ids.map((item) => {
               return <div className="pic" key={item}></div>;
             })} */}
-          <div className="pic" ref={picRef} ></div>;
+            <div className="pic" ref={picRef}></div>;
           </div>
         </div>
 
-        <div className="detailPicBox" onMouseMove={(e) => handleMouseMove(e)} onWheel={handleWheel}>
-          <div className="detailPic" ref={imgRef} ></div>
+        <div
+          className="detailPicBox"
+          onMouseMove={(e) => handleMouseMove(e)}
+          onWheel={handleWheel}
+        >
+          <div className="detailPic" ref={imgRef}></div>
 
           {isShow ? (
             <div className="position">
@@ -244,8 +266,23 @@ export function Part1() {
           ) : null}
           {isShow ? (
             <div className="viewPort">
-             <div>Zoom:{Math.floor(viewPort.scale*100) }%</div>
-             <div> WW/WL:<span>{Math.floor(viewPort.voi.windowWidth) }/{Math.floor(viewPort.voi.windowCenter) }</span></div>
+              <div>Zoom:{Math.floor(viewPort.scale * 100)}%</div>
+              <div>
+                {" "}
+                WW/WL:
+                <span>
+                  {Math.floor(viewPort.voi.windowWidth)}/
+                  {Math.floor(viewPort.voi.windowCenter)}
+                </span>
+              </div>
+            </div>
+          ) : null}
+
+          {isShow ? (
+            <div className="PatientInfo">
+              <p>Patiend ID : {patientInfo.PatientID ? patientInfo.PatientID : "undefined"}</p>
+              <p>Patinet Age : {patientInfo.PatientAge ?  patientInfo.PatientAge : "undefined" }</p>
+              <p>Patinet Address : {patientInfo.PatientAddress ?  patientInfo.PatiendAddress : "undefined" }</p>
             </div>
           ) : null}
         </div>

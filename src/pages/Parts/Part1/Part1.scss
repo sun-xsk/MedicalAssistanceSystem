@@ -134,17 +134,25 @@
       justify-content: center;
       align-items: center;
       position: relative;
-      .position{
+
+      .position,
+      .viewPort,
+      .PatientInfo{
         position: absolute;
-        left: 15px;
-        bottom: 15px;
         color: #00a4d9;
       }
+      .position{
+        left: 2vw;
+        bottom: 2vh;
+      }
       .viewPort{
-        position: absolute;
-        right: 15px;
-        bottom: 15px;
-        color: #00a4d9;
+        width: 130px;
+        right: 2vw;
+        bottom: 2vh;
+      }
+      .PatientInfo{
+        left: 2vw;
+        top: 2vh;
       }
       .detailPic{
         position: relative;
