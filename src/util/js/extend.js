@@ -8,7 +8,7 @@ function extend() {
     let getCache = dataSetCacheManager.get; // 源码中的获取 dataset方法
     // 你不重写，那么就自能改源码，否则实现不了，改源码只要添加个 add方法，就不会有重写那么多代码。
     cornerstoneWADOImageLoader.wadouri.dataSetCacheManager = {
-        ...dataSetCacheManager,
+        ...dataSetCacheManager, 
         get(uri) { // 这个是最重要的
             if (loadedDataSets[uri]) return loadedDataSets[uri].dataSet;
             return getCache(uri); // 返回 DataSet

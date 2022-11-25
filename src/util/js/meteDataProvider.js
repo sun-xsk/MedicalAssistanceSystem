@@ -7,7 +7,7 @@ function metaDataProvider(type, imageId) {
     var dataSet = cornerstoneWADOImageLoader.wadouri.dataSetCacheManager.get(parsedImageId.url);
     if (!dataSet) {
         return;
-    }
+    } 
 
     if (type === 'generalSeriesModule') {
         return {

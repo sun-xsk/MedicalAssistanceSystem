@@ -58,6 +58,7 @@ export function Part1() {
   }
 
   cornerstone.metaData.addProvider(function (type, imageId) {
+    
     if (type == "imagePixelModule" && imageId == fileImgId) {
       return getImagePixelModule(result);
     }

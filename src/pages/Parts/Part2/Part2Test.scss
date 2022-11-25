@@ -1,5 +1,6 @@
 @import "../../../util/scss/all.scss";
 
+
 .Part2Test {
   position: absolute;
   width: 100%;
@@ -14,7 +15,7 @@
     width: 100%;
     height: 5%;
     background-color: #0d1117;
-    border-bottom: #106f8f solid 1px;
+    border-bottom: $mainColor solid 1px;
     @include flexBox(flex-start);
     a {
       text-decoration: none;
@@ -23,7 +24,7 @@
       margin-left: 25px;
       height: 100%;
       padding: 10px;
-      color: #00a4d9;
+      color: $mainColor;
       font-size: 13px;
       @include flexBox(center);
       .txt {
@@ -38,14 +39,14 @@
     width: 100%;
     height: 14%;
     background-color: #000000;
-    border-bottom: #106f8f solid 1px;
+    border-bottom: $mainColor solid 1px;
     @include flexBox(flex-start);
     //   设置单个功能样式
     .singleTool {
       height: 60%;
       width: 70px;
       margin-left: 15px;
-      color: #00a4d9;
+      color: $mainColor;
       transition: 0.4s;
       background-color: #000000;
       @include flexBox(center);
@@ -66,14 +67,14 @@
       cursor: pointer;
       position: absolute;
       right: 4vw;
-      background-color: #00a4d9;
+      background-color: $mainColor;
       color: white;
       width: 80px;
       height: 35px;
       font-size: 18px;
     }
     .uploadTool:hover {
-      background-color: #0aafe6;
+      background-color: $mainColor;
     }
   }
   //  下面展示图片列表和大图
@@ -103,7 +104,7 @@
           left: 9%;
           margin-top: 30px;
           background-color: rgb(0, 0, 0);
-          border: #00a4d9 solid 1px;
+          border: $mainColor solid 1px;
           border-radius: 5px;
         }
       }
@@ -128,7 +129,7 @@
       width: 82%;
       height: 99.4%;
       background-color: rgb(0, 0, 0);
-      border: #087aa0 1px solid;
+      border: $mainColor 1px solid;
       border-top: none;
       border-radius: 3px;
       display: flex;

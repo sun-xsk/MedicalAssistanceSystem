@@ -9,18 +9,25 @@ import {
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
 
+import httpUtil from "../../../util/axios/httpUtil";
 import Header from "../Header/Header";
 import "./Part2Test.scss";
+import axios from "axios";
 
 // 添加对应的工具信息
 const mouseToolChain = [
   { name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
   {
-    name: "ZoomMouseWheel",
-    func: cornerstoneTools.AngleTool,
+    name: "Rotate",
+    func: cornerstoneTools.RotateTool,
     config: {},
   },
-  { name: "Angle", func: cornerstoneTools.AngleTool, config: {} },
+  {
+    name: "FreehandScissors",
+    func: cornerstoneTools.FreehandScissorsTool,
+    config: {},
+  },
+  { name: "xxx", func: cornerstoneTools.clipBoxToDisplayedArea, config: {} },
 ];
 
 export function Part2Test() {
@@ -34,6 +41,12 @@ export function Part2Test() {
   let fileImgId = ""; // 当前选中的 DCM文件 imageId
   let imageIds = [];
 
+  // httpUtil.getRegisterStatus().then((res) => {
+  //   console.log(res);
+  // });
+  axios.get("http://43.142.168.114:8001/MedicalSystem/file/testConnect").then(res=>{
+    console.log(res);
+  })
   //   判断是需要哪一个工具
   function chooseTool(name) {
     return () => {
@@ -65,6 +78,57 @@ export function Part2Test() {
       hflip: upLr,
     });
   }
+  // 剪裁图片
+  function ScissorPic() {
+    // const data = { left: 10, top: 20, width: "20px", height: "20px" };
+    // // cancelDrawin
+    const ele = document.getElementById("test");
+    let viewport = cornerstone.getViewport(ele);
+
+    // cornerstoneTools.clipBoundingBox(imgRef.current , 20, 20);
+    // // cornerstoneTools.playClip(imgRef.current, 30)
+    // // cornerstone.copyPoints(imgRef.current);
+    console.log("eeee");
+    // viewport.voi.windowWidth = 90;
+    // viewport.voi.windowCenter = 30;
+    // cornerstone.setViewport(imgRef.current, viewport);
+  }
+  function LimpidPic() {
+    // 拿到当前的canvas组件
+    const canvas = document.getElementsByClassName("cornerstone-canvas")[0];
+    const ctx = canvas.getContext("2d");
+
+    // 获取图片像素信息
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let data = imageData.data;
+
+    // 获取一行的间隔为space，让一个像素点的数据间隔为4（是rgba颜色值）
+    const space = imageData.width * 4;
+    console.log(space, "...", data.length);
+    // const singleSpace = 4;
+    for (let i = space; i < data.length - space; i += 4) {
+      // 直接跳过边界
+      if (i % space === 0 || (i + 4) % space === 0) {
+        continue;
+      } else {
+        const singleData =
+          data[i - space] +
+          data[i - space + 4] +
+          data[i - space - 4] +
+          data[i] +
+          data[i + 4] +
+          data[i - 4] +
+          data[i + space] +
+          data[i + space + 4] +
+          data[i + space - 4];
+        const avg = singleData / 9;
+        data[i] = avg;
+        data[i + 1] = avg;
+        data[i + 2] = avg;
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
+  }
 
   cornerstone.metaData.addProvider(function (type, imageId) {
     if (type == "imagePixelModule" && imageId == fileImgId) {
@@ -81,7 +145,13 @@ export function Part2Test() {
   function loadFiles(e) {
     let files = e.target.files;
     if (!files || !files.length) return;
-
+    const formdata = new FormData();
+    formdata.append("file", files[0]);
+    console.log(files[0]);
+    // httpUtil.upLoadFile(files[0]).then((res) => {
+    //   console.log(res);
+    // });
+    imageIds = [];
     for (let i = 1; i < files.length; i++) {
       let file = files[i];
       let read = new FileReader();
@@ -138,7 +208,7 @@ export function Part2Test() {
           <div className="txt">图像加强</div>
         </button>
 
-        <button className="singleTool" onClick={chooseTool("ZoomMouseWheel")}>
+        <button className="singleTool" onClick={LimpidPic}>
           <span className="iconfont toolIcons">&#xe7ca;</span>
           <div className="txt">图像去噪</div>
         </button>
@@ -153,7 +223,7 @@ export function Part2Test() {
           <div className="txt">左右翻转</div>
         </button>
 
-        <button className="singleTool" onClick={chooseTool("Angle")}>
+        <button className="singleTool" onClick={ScissorPic}>
           <span className="iconfont toolIcons">&#xe631;</span>
           <div className="txt">图像剪裁</div>
         </button>
@@ -183,6 +253,7 @@ export function Part2Test() {
         <div className="detailPicBox">
           <div
             className="detailPic"
+            id="test"
             onContextMenu={() => false}
             onMouseDown={() => false}
             ref={imgRef}
