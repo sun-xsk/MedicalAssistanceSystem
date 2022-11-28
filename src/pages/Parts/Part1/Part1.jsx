@@ -3,21 +3,16 @@ import {
   cornerstone,
   dicomParser,
   cornerstoneWADOImageLoader,
-  getImagePixelModule,
-  metaDataProvider,
-  extend,
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
 
 import {
-  testConnect,
   getFileInfo,
   uploadFile,
   getFilePath,
 } from "../../../util/api/httpUtil";
 
 import Header from "./Header/Header";
-import { MenuFoldOutlined } from "@ant-design/icons";
 import "./Part1.scss";
 
 const mouseToolChain = [
@@ -61,9 +56,7 @@ export function Part1() {
   });
   const [patientInfo,setPatientInfo] = useState({})
   const [isShow, setIsShow] = useState(false);
-  let result = undefined; 
-  let fileImgId = ""; 
-
+  let [data,setData]=useState("")
   useEffect(() => {
     cornerstone.enable(imgRef.current);
     cornerstone.enable(picRef.current);
@@ -71,11 +64,34 @@ export function Part1() {
       cornerstoneTools.StackScrollMouseWheelTool;
     cornerstoneTools.addTool(StackScrollMouseWheelTool);
     cornerstoneTools.setToolActive("StackScrollMouseWheel", {});
-    extend();
-    let str="1.3.6.1.4.1.14519.5.2.1.6919.4624.564189861532450849715051784042/7 .dcm"
-    let id=str.replace(/(.*\/)*([^.]+).*/ig,"$2");
-    console.log(id)
+
   }, []);
+  useEffect(()=>{
+    let path=JSON.parse(sessionStorage.getItem("FILE_PATH")) || null
+    console.log(path);
+    if(path){ 
+      let images = path[Object.keys(path)[0]];
+      //imageIds初始化及排序
+      let imageIds = images.map((item) => {
+        return "wadouri:" + item;
+      });
+      imageIds.sort((a,b)=>{
+        return a.replace(/(.*\/)*([^.]+).*/ig,"$2") - b.replace(/(.*\/)*([^.]+).*/ig,"$2")
+      })
+  
+      let stack = {
+        currentImageIdIndex: 0,
+        imageIds,
+      };
+      cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
+        cornerstone.displayImage(imgRef.current, img);
+        cornerstone.displayImage(picRef.current, img);
+        cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
+        cornerstoneTools.addToolState(imgRef.current, "stack", stack);
+      });
+    }
+   
+  },[data])
 
   function chooseTool(name) {
     return () => {
@@ -95,12 +111,6 @@ export function Part1() {
     };
   }
 
-  cornerstone.metaData.addProvider(function (type, imageId) {
-    if (type == "imagePixelModule" && imageId == fileImgId) {
-      return getImagePixelModule(result);
-    }
-    return metaDataProvider(type, imageId);
-  });
 
   function uploadFiles() {
     fileRef.current.click();
@@ -127,29 +137,9 @@ export function Part1() {
     } = fileInfo.data
     let filePath = await getFilePath(PatientID);
     console.log('filePath',filePath);
-    let data = filePath.data;
-    let images = data[Object.keys(data)[0]];
-
-    //imageIds初始化及排序
-    let imageIds = images.map((item) => {
-      return "wadouri:" + item;
-    });
-    imageIds.sort((a,b)=>{
-      return a.replace(/(.*\/)*([^.]+).*/ig,"$2") - b.replace(/(.*\/)*([^.]+).*/ig,"$2")
-    })
-
-    let stack = {
-      currentImageIdIndex: 0,
-      imageIds,
-    };
-    cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
-      cornerstone.displayImage(imgRef.current, img);
-      cornerstone.displayImage(picRef.current, img);
-      cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
-      cornerstoneTools.addToolState(imgRef.current, "stack", stack);
-
-      setIsShow(true);
-    });
+    sessionStorage.setItem("FILE_PATH",JSON.stringify(filePath.data))
+    setData(sessionStorage.getItem("FILE_PATH"))
+    setIsShow(true);
   }
  
   const handleMouseMove = (e) => {

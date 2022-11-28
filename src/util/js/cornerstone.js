@@ -4,9 +4,7 @@ import dicomParser from "dicom-parser";
 import cornerstoneTools from "cornerstone-tools";
 import cornerstoneMath from "cornerstone-math"
 import Hammer from "hammerjs";
-import getImagePixelModule from './getImagePixelModule'
-import metaDataProvider from './meteDataProvider'
-import extend from './extend'
+
 
 cornerstoneTools.external.cornerstone = cornerstone
 cornerstoneTools.external.cornerstoneMath = cornerstoneMath
@@ -15,17 +13,10 @@ cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
 cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
 
 cornerstoneTools.init()
-// const StackScrollMouseWheelTool = cornerstoneTools.StackScrollMouseWheelTool
-// cornerstoneTools.addTool(StackScrollMouseWheelTool)
-// cornerstoneTools.setToolActive('StackScrollMouseWheel', {})
-
 
 export {
     cornerstone,
     cornerstoneWADOImageLoader,
     dicomParser,
     cornerstoneTools,
-    getImagePixelModule,
-    metaDataProvider,
-    extend,
 }
