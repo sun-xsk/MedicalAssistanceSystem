@@ -74,6 +74,19 @@
     .uploadTool:hover{
       background-color: #0aafe6;
     }
+    .saveTool{
+      cursor: pointer;
+      position: absolute;
+      right: 11vw;
+      background-color: #00a4d9;
+      color: white;
+      width: 80px;
+      height: 35px;
+      font-size: 18px;
+    }
+    .saveTool:hover{
+      background-color: #0aafe6;
+    }
   }
   //  下面展示图片列表和大图
   .p-detail {

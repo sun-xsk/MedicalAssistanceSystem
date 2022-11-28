@@ -179,6 +179,9 @@ export function Part1() {
           <div className="txt">上传</div>
           <input type="file" onChange={loadFiles} style={{ display: "none" }} webkitdirectory="true" ref={fileRef} />
         </button>
+        <button className="saveTool">
+          <div className="txt">保存</div>
+        </button>
       </div>
 
       <div className="p-detail">
