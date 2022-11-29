@@ -1,7 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()]
+  plugins: [react()],
+  server: {
+    proxy: {
+      '/projects': {
+        target: 'http://43.142.168.114:8081', 
+        changeOrigin: true, //支持跨域
+      }
+    }
+  }
 })

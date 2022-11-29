@@ -146,15 +146,38 @@
       display: flex;
       justify-content: center;
       align-items: center;
-    }
-    .detailPic{
-      height: 80vh;
-      width: 80vh;
       position: relative;
+
+      .position,
+      .viewPort,
+      .PatientInfo{
+        position: absolute;
+        color: #00a4d9;
+      }
+      .position{
+        left: 2vw;
+        bottom: 2vh;
+      }
+      .viewPort{
+        width: 130px;
+        right: 2vw;
+        bottom: 2vh;
+      }
+      .PatientInfo{
+        left: 2vw;
+        top: 2vh;
+      }
+      .detailPic{
+        position: relative;
+        height: 80vh;
+        width: 80vh;
+      }
     }
+    
     .toolIcons{
       font-size: 30px;
     }
+   
 
   }
 }
