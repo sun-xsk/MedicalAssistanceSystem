@@ -16,6 +16,7 @@ import Header from "./Header/Header";
 import "./Part1.scss";
 
 const mouseToolChain = [
+  { name: "StackScrollMouseWheel", func: cornerstoneTools.StackScrollMouseWheelTool, config: {} },
   { name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
   {
     name: "ZoomMouseWheel",
@@ -60,11 +61,10 @@ export function Part1() {
   useEffect(() => {
     cornerstone.enable(imgRef.current);
     cornerstone.enable(picRef.current);
-    const StackScrollMouseWheelTool =
-      cornerstoneTools.StackScrollMouseWheelTool;
-    cornerstoneTools.addTool(StackScrollMouseWheelTool);
-    cornerstoneTools.setToolActive("StackScrollMouseWheel", {});
-
+    // const StackScrollMouseWheelTool =
+    //   cornerstoneTools.StackScrollMouseWheelTool;
+    // cornerstoneTools.addTool(StackScrollMouseWheelTool);
+    // cornerstoneTools.setToolActive("StackScrollMouseWheel", {});  
   }, []);
   useEffect(()=>{
     let path=JSON.parse(sessionStorage.getItem("FILE_PATH")) || null
@@ -89,6 +89,8 @@ export function Part1() {
         cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
         cornerstoneTools.addToolState(imgRef.current, "stack", stack);
       });
+      setPatientInfo(JSON.parse( sessionStorage.getItem("FILE_INFO"))) 
+      setIsShow(true)
     }
    
   },[data])
@@ -111,7 +113,6 @@ export function Part1() {
     };
   }
 
-
   function uploadFiles() {
     fileRef.current.click();
   }
@@ -128,8 +129,9 @@ export function Part1() {
     uploadFile(formdata);
 
     let fileInfo = await getFileInfo(demoData);
-    console.log(fileInfo.data);
+    console.log(fileInfo);
     setPatientInfo(fileInfo.data)
+    sessionStorage.setItem("FILE_INFO",JSON.stringify(fileInfo.data))
     let {
       PatientID,
       PatientAge,
@@ -160,6 +162,11 @@ export function Part1() {
     <div className="Part1">
       <Header />
       <div className="toolBar">
+      <button className="singleTool" onClick={chooseTool("StackScrollMouseWheel")}>
+          <span className="iconfont toolIcons">&#xe6f6;</span>
+          <div className="txt">Scroll</div>
+        </button>
+
         <button className="singleTool" onClick={chooseTool("Wwwc")}>
           <span className="iconfont toolIcons">&#xe635;</span>
           <div className="txt">Wwwc</div>
@@ -227,6 +234,9 @@ export function Part1() {
             webkitdirectory="true"
             ref={fileRef}
           />
+        </button>
+        <button className="saveTool">
+          <div className="txt">保存</div>
         </button>
       </div>
 

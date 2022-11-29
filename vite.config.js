@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/projects': {
-        target: 'http://43.142.168.114:8081', 
+        target: '192.168.112.100:50000', 
         changeOrigin: true, //支持跨域
       }
     }
