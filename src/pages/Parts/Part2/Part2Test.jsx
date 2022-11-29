@@ -12,7 +12,8 @@ import {
 import httpUtil from "../../../util/axios/httpUtil";
 import Header from "../Header/Header";
 import "./Part2Test.scss";
-import axios from "axios";
+// import axios from "axios";
+import { btnClickExport } from "../../../util/js/downloadFile";
 
 // 添加对应的工具信息
 const mouseToolChain = [
@@ -25,6 +26,11 @@ const mouseToolChain = [
   {
     name: "FreehandScissors",
     func: cornerstoneTools.FreehandScissorsTool,
+    config: {},
+  },
+  {
+    name: "ZoomMouseWheel",
+    func: cornerstoneTools.ZoomMouseWheelTool,
     config: {},
   },
   { name: "xxx", func: cornerstoneTools.clipBoxToDisplayedArea, config: {} },
@@ -44,9 +50,11 @@ export function Part2Test() {
   // httpUtil.getRegisterStatus().then((res) => {
   //   console.log(res);
   // });
-  axios.get("http://43.142.168.114:8001/MedicalSystem/file/testConnect").then(res=>{
-    console.log(res);
-  })
+  // axios
+  //   .get("http://43.142.168.114:8001/MedicalSystem/file/testConnect")
+  //   .then((res) => {
+  //     console.log(res);
+  //   });
   //   判断是需要哪一个工具
   function chooseTool(name) {
     return () => {
@@ -190,6 +198,12 @@ export function Part2Test() {
     }
   }
 
+  // 下载文件
+  function downLoad() {
+    const data = { test1: [[1, 1, 1], [1, 1, 1, 1]], test2: [[0, 0, 0, 0], [0, 0, 0]] };
+    btnClickExport(data);
+  }
+
   useEffect(() => {
     cornerstone.enable(imgRef.current);
     const StackScrollMouseWheelTool =
@@ -203,41 +217,47 @@ export function Part2Test() {
     <div className="Part2Test">
       <Header />
       <div className="toolBar">
-        <button className="singleTool" onClick={chooseTool("Wwwc")}>
-          <span className="iconfont toolIcons">&#xe635;</span>
-          <div className="txt">图像加强</div>
-        </button>
+        <div className="left">
+          <button className="singleTool" onClick={chooseTool("Wwwc")}>
+            <span className="iconfont toolIcons">&#xe635;</span>
+            <div className="txt">图像加强</div>
+          </button>
 
-        <button className="singleTool" onClick={LimpidPic}>
-          <span className="iconfont toolIcons">&#xe7ca;</span>
-          <div className="txt">图像去噪</div>
-        </button>
+          <button className="singleTool" onClick={LimpidPic}>
+            <span className="iconfont toolIcons">&#xe7ca;</span>
+            <div className="txt">图像去噪</div>
+          </button>
 
-        <button className="singleTool" onClick={upsideDownTb}>
-          <span className="iconfont toolIcons">&#xe662;</span>
-          <div className="txt">上下翻转</div>
-        </button>
+          <button className="singleTool" onClick={upsideDownTb}>
+            <span className="iconfont toolIcons">&#xe662;</span>
+            <div className="txt">上下翻转</div>
+          </button>
 
-        <button className="singleTool" onClick={upsideDownLr}>
-          <span className="iconfont toolIcons">&#xeb70;</span>
-          <div className="txt">左右翻转</div>
-        </button>
+          <button className="singleTool" onClick={upsideDownLr}>
+            <span className="iconfont toolIcons">&#xeb70;</span>
+            <div className="txt">左右翻转</div>
+          </button>
 
-        <button className="singleTool" onClick={ScissorPic}>
-          <span className="iconfont toolIcons">&#xe631;</span>
-          <div className="txt">图像剪裁</div>
-        </button>
-
-        <button className="uploadTool" onClick={uploadFiles}>
-          <div className="txt">上传</div>
-          <input
-            type="file"
-            onChange={loadFiles}
-            style={{ display: "none" }}
-            webkitdirectory="true"
-            ref={fileRef}
-          />
-        </button>
+          <button className="singleTool" onClick={chooseTool("ZoomMouseWheel")}>
+            <span className="iconfont toolIcons">&#xe631;</span>
+            <div className="txt">图像剪裁</div>
+          </button>
+        </div>
+        <div className="right">
+          <button className="uploadTool" onClick={uploadFiles}>
+            <div className="txt">上传</div>
+            <input
+              type="file"
+              onChange={loadFiles}
+              style={{ display: "none" }}
+              webkitdirectory="true"
+              ref={fileRef}
+            />
+          </button>
+          <button className="uploadTool" onClick={downLoad}>
+            <div className="txt">下载</div>
+          </button>
+        </div>
       </div>
 
       {/* 下面展示图片 */}

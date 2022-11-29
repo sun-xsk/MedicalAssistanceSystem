@@ -173,7 +173,7 @@ export function Part1() {
           <span className="iconfont toolIcons">&#xe670;</span>
           <div className="txt">Brush</div>
         </button>
-
+ 
 
 
         <button className="uploadTool" onClick={uploadFiles}>
