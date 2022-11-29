@@ -37,7 +37,7 @@ export function Part2() {
           <span className="iconfont toolIcons">&#xe7cd;</span>
           <div className="txt">剪裁</div>
         </button>
-        
+
         <button className="uploadTool">
           <div className="txt">上传</div>
           <input
