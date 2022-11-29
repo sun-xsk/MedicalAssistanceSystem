@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Image } from "antd";
 
-import svg from "../../../../assets/back.svg";
+import svg from "../../../assets/back.svg";
 
 
 export default function Header() {

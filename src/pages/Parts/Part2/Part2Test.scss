@@ -1,11 +1,11 @@
 @import "../../../util/scss/all.scss";
 
-.Part1 {
+.Part2Test {
   position: absolute;
   width: 100%;
   height: 100%;
-  min-height: 500px;
-  min-width: 1000px;
+  // min-height: 500px;
+  // min-width: 1000px;
   background-color: rgb(83, 83, 83);
   @include flexBox();
   flex-direction: column;
@@ -14,7 +14,7 @@
     width: 100%;
     height: 5%;
     background-color: #0d1117;
-    border-bottom: #106f8f solid 1px;
+    border-bottom: $mainColor solid 1px;
     @include flexBox(flex-start);
     a {
       text-decoration: none;
@@ -23,7 +23,7 @@
       margin-left: 25px;
       height: 100%;
       padding: 10px;
-      color: #00a4d9;
+      color: $mainColor;
       font-size: 13px;
       @include flexBox(center);
       .txt {
@@ -38,54 +38,56 @@
     width: 100%;
     height: 14%;
     background-color: #000000;
-    border-bottom: #106f8f solid 1px;
+    border-bottom: $mainColor solid 1px;
     @include flexBox(flex-start);
-    //   设置单个功能样式
-    .singleTool {
-      height: 60%;
-      width: 70px;
-      margin-left: 15px;
-      color: #00a4d9;
-      transition: 0.4s;
-      background-color: #000000;
-      @include flexBox(center);
-      flex-direction: column;
-      .txt {
-        margin-top: 5px;
-        font-size: 14px;
+    .left {
+      width: 60%;
+      height: 100%;
+      @include flexBox(flex-start);
+      //   设置单个功能样式
+      .singleTool {
+        height: 60%;
+        width: 70px;
+        margin-left: 15px;
+        color: $mainColor;
+        transition: 0.4s;
+        background-color: #000000;
+        @include flexBox(center);
+        flex-direction: column;
+        .txt {
+          margin-top: 5px;
+          font-size: 14px;
+        }
+      }
+      .singleTool:first-child {
+        margin-left: 20px;
+      }
+      .singleTool:hover {
+        color: rgba(203, 201, 196, 0.6);
+        cursor: pointer;
       }
     }
-    .singleTool:first-child {
-      margin-left: 20px;
-    }
-    .singleTool:hover {
-      color: rgba(203, 201, 196, 0.6);
-    }
-    .uploadTool{
-      cursor: pointer;
-      position: absolute;
-      right: 4vw;
-      background-color: #00a4d9;
-      color: white;
-      width: 80px;
-      height: 35px;
-      font-size: 18px;
-    }
-    .uploadTool:hover{
-      background-color: #0aafe6;
-    }
-    .saveTool{
-      cursor: pointer;
-      position: absolute;
-      right: 11vw;
-      background-color: #00a4d9;
-      color: white;
-      width: 80px;
-      height: 35px;
-      font-size: 18px;
-    }
-    .saveTool:hover{
-      background-color: #0aafe6;
+    .right {
+      width: 40%;
+      height: 100%;
+      @include flexBox(flex-end);
+      button {
+        width: 130px;
+        height: 34%;
+        margin-right: 30px;
+        border-radius: 4px;
+        font-size: 16px;
+        background-color: rgb(27, 33, 35);
+        border: 1px solid rgb(52, 181, 228);
+        color: rgb(52, 181, 228);
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: rgb(52, 181, 228);
+        border: 1px solid rgb(115, 115, 115);
+        color: #ffffff;
+      }
     }
   }
   //  下面展示图片列表和大图
@@ -115,7 +117,7 @@
           left: 9%;
           margin-top: 30px;
           background-color: rgb(0, 0, 0);
-          border: #00a4d9 solid 1px;
+          border: $mainColor solid 1px;
           border-radius: 5px;
         }
       }
@@ -140,44 +142,20 @@
       width: 82%;
       height: 99.4%;
       background-color: rgb(0, 0, 0);
-      border: #087aa0 1px solid;
+      border: $mainColor 1px solid;
       border-top: none;
       border-radius: 3px;
       display: flex;
       justify-content: center;
       align-items: center;
-      position: relative;
-
-      .position,
-      .viewPort,
-      .PatientInfo{
-        position: absolute;
-        color: #00a4d9;
-      }
-      .position{
-        left: 2vw;
-        bottom: 2vh;
-      }
-      .viewPort{
-        width: 130px;
-        right: 2vw;
-        bottom: 2vh;
-      }
-      .PatientInfo{
-        left: 2vw;
-        top: 2vh;
-      }
-      .detailPic{
-        position: relative;
-        height: 80vh;
-        width: 80vh;
-      }
     }
-    
-    .toolIcons{
+    .detailPic {
+      height: 80vh;
+      width: 80vh;
+      position: relative;
+    }
+    .toolIcons {
       font-size: 30px;
     }
-   
-
   }
 }

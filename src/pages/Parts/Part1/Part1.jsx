@@ -5,6 +5,7 @@ import {
   cornerstoneWADOImageLoader,
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
+ 
 
 import {
   getFileInfo,
@@ -12,7 +13,7 @@ import {
   getFilePath,
 } from "../../../util/api/httpUtil";
 
-import Header from "./Header/Header";
+import Header from "../Header/Header";
 import "./Part1.scss";
 
 const mouseToolChain = [
