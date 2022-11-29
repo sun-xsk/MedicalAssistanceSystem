@@ -89,6 +89,8 @@ export function Part1() {
         cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
         cornerstoneTools.addToolState(imgRef.current, "stack", stack);
       });
+      setPatientInfo(JSON.parse( sessionStorage.getItem("FILE_INFO"))) 
+      setIsShow(true)
     }
    
   },[data])
@@ -129,6 +131,7 @@ export function Part1() {
     let fileInfo = await getFileInfo(demoData);
     console.log(fileInfo);
     setPatientInfo(fileInfo.data)
+    sessionStorage.setItem("FILE_INFO",JSON.stringify(fileInfo.data))
     let {
       PatientID,
       PatientAge,
