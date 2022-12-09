@@ -112,7 +112,7 @@ export function Part2Test() {
 
     // 获取一行的间隔为space，让一个像素点的数据间隔为4（是rgba颜色值）
     const space = imageData.width * 4;
-    console.log(space, "...", data.length);
+    // console.log(space, "...", data.length);
     // const singleSpace = 4;
     for (let i = space; i < data.length - space; i += 4) {
       // 直接跳过边界
