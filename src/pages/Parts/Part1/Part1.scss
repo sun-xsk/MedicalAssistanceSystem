@@ -74,6 +74,19 @@
     .uploadTool:hover{
       background-color: #0aafe6;
     }
+    .saveTool{
+      cursor: pointer;
+      position: absolute;
+      right: 11vw;
+      background-color: #00a4d9;
+      color: white;
+      width: 80px;
+      height: 35px;
+      font-size: 18px;
+    }
+    .saveTool:hover{
+      background-color: #0aafe6;
+    }
   }
   //  下面展示图片列表和大图
   .p-detail {
@@ -133,15 +146,38 @@
       display: flex;
       justify-content: center;
       align-items: center;
-    }
-    .detailPic{
-      height: 80vh;
-      width: 80vh;
       position: relative;
+
+      .position,
+      .viewPort,
+      .PatientInfo{
+        position: absolute;
+        color: #00a4d9;
+      }
+      .position{
+        left: 2vw;
+        bottom: 2vh;
+      }
+      .viewPort{
+        width: 130px;
+        right: 2vw;
+        bottom: 2vh;
+      }
+      .PatientInfo{
+        left: 2vw;
+        top: 2vh;
+      }
+      .detailPic{
+        position: relative;
+        height: 80vh;
+        width: 80vh;
+      }
     }
+    
     .toolIcons{
       font-size: 30px;
     }
+   
 
   }
 }

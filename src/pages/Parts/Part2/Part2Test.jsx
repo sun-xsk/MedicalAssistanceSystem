@@ -8,6 +8,11 @@ import {
   extend,
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
+import {
+  getFileInfo,
+  uploadFile,
+  getFilePath,
+} from "../../../util/api/httpUtil";
 
 import Header from "../Header/Header";
 import "./Part2Test.scss";
@@ -28,6 +33,13 @@ export function Part2Test() {
   const [ids, setIds] = useState([0]);
   const fileRef = useRef(null);
   const imgRef = useRef(null);
+  const picRef = useRef(null);
+  const [viewPort, setViewPort] = useState({
+    voi: { windowWidth: "", windowCenter: "" },
+    scale: 0,
+  });
+  const [patientInfo, setPatientInfo] = useState({})
+  const [isShow, setIsShow] = useState(false);
 
   let upTb = false;
   let upLr = false;
@@ -137,6 +149,34 @@ export function Part2Test() {
     extend();
   }, []);
 
+  useEffect(() => {
+    let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null
+    console.log(path);
+    if (path) {
+      let images = path[Object.keys(path)[0]];
+      //imageIds初始化及排序
+      let imageIds = images.map((item) => {
+        return "wadouri:" + item;
+      });
+      imageIds.sort((a, b) => {
+        return a.replace(/(.*\/)*([^.]+).*/ig, "$2") - b.replace(/(.*\/)*([^.]+).*/ig, "$2")
+      })
+
+      let stack = {
+        currentImageIdIndex: 0,
+        imageIds,
+      };
+      cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
+        cornerstone.displayImage(imgRef.current, img);
+        cornerstone.displayImage(picRef.current, img);
+        cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
+        cornerstoneTools.addToolState(imgRef.current, "stack", stack);
+      });
+      setPatientInfo(JSON.parse(sessionStorage.getItem("FILE_INFO")))
+      setIsShow(true)
+    }
+
+  }, [data])
   return (
     <div className="Part2Test">
       <Header />
@@ -183,9 +223,10 @@ export function Part2Test() {
       <div className="p-detail">
         <div className="p-picList">
           <div className="showPic">
-            {ids.map((item) => {
+            {/* {ids.map((item) => {
               return <div className="pic" key={item}></div>;
-            })}
+            })} */}
+            <div className="pic" ref={picRef}></div>;
           </div>
         </div>
 
@@ -197,6 +238,34 @@ export function Part2Test() {
             onMouseDown={() => false}
             ref={imgRef}
           ></div>
+          {isShow ? (
+            <div className="position">
+              <span>X:{position.x}</span>
+              &nbsp;
+              <span>Y:{position.y}</span>
+            </div>
+          ) : null}
+          {isShow ? (
+            <div className="viewPort">
+              <div>Zoom:{Math.floor(viewPort.scale * 100)}%</div>
+              <div>
+                {" "}
+                WW/WL:
+                <span>
+                  {Math.floor(viewPort.voi.windowWidth)}/
+                  {Math.floor(viewPort.voi.windowCenter)}
+                </span>
+              </div>
+            </div>
+          ) : null}
+
+          {isShow ? (
+            <div className="PatientInfo">
+              <p>Patiend ID : {patientInfo.PatientID ? patientInfo.PatientID : "undefined"}</p>
+              <p>Patinet Age : {patientInfo.PatientAge ? patientInfo.PatientAge : "undefined"}</p>
+              <p>Patinet Address : {patientInfo.PatientAddress ? patientInfo.PatiendAddress : "undefined"}</p>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>
