@@ -13,6 +13,8 @@ import {
   getFileInfo,
   uploadFile,
   getFilePath,
+  testConnect,
+  getDicomFileBySeriesInstanceUIDAndInstanceNumber,
 } from "../../../util/api/httpUtil";
 
 import Header from "../Header/Header";
@@ -94,11 +96,6 @@ export function Part2Test() {
     }
   }, [data]);
 
-  axios
-    .get("http://43.142.168.114:8001/MedicalSystem/file/testConnect")
-    .then((res) => {
-      console.log(res);
-    });
   // 获取鼠标移动信息和滚动事件
   const handleMouseMove = (e) => {
     setPosition({
@@ -213,6 +210,10 @@ export function Part2Test() {
     demoData.append("file", files[0]);
     console.log(formdata.getAll("file"));
     uploadFile(formdata).then((res) => {
+      console.log(res);
+    });
+
+    testConnect().then((res) => {
       console.log(res);
     });
 

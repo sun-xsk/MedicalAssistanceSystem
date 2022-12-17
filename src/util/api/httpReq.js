@@ -3,7 +3,6 @@ import { message } from "antd";
 
 const instance = axios.create({
   baseURL: "http://43.142.168.114:8001/MedicalSystem",
-  withCredentials: true,
   timeout: 100000,
 });
 

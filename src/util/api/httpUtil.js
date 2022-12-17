@@ -16,5 +16,5 @@ export const getFilePath = (patientID) =>
     Post('/file/getDicomFilePath', '', { patientID })
 
 // 通过序列号（InstanceNumber）和序列uid（SeriesInstanceUID）获取文件
-export const getDicomFileBySeriesInstanceUIDAndInstanceNumber = (patientID) =>
-    Post('/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber', '', { patientID })
+export const getDicomFileBySeriesInstanceUIDAndInstanceNumber = (NumAndUID) =>
+    Post('/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber', '',  NumAndUID)
