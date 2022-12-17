@@ -2,7 +2,7 @@ import axios from "axios";
 import { message } from "antd";
 
 const instance = axios.create({
-  baseURL: "/MedicalSystem",
+  baseURL: "http://43.142.168.114:8001/MedicalSystem",
   withCredentials: true,
   timeout: 100000,
 });
@@ -51,7 +51,7 @@ const handleNetError = (errStatus) => {
         errMessage = `其他连接错误 --${errStatus}`;
     }
   } else {
-    errMessage = `无法连接到服务器！`; 
+    errMessage = `无法连接到服务器！`;
   }
 
   message.error(errMessage);
@@ -70,8 +70,8 @@ instance.interceptors.response.use(
 export const Get = (url) => {
   return new Promise((resolve, reject) => {
     instance.get(url).then((result) => {
-        resolve(result);
-      })
+      resolve(result);
+    })
       .catch((err) => {
         reject(err);
       });
@@ -79,20 +79,20 @@ export const Get = (url) => {
 };
 
 export const Post = (url, data, params, headers) => {
-    return new Promise((resolve,reject)=>{
-        instance({
-            method:'post',
-            url,
-            data,
-            params,
-            headers
-        }).then(
-            (data)=>{
-                resolve(data)
-            }),
-            (err)=>{
-                reject(err)
-            }
-    })
+  return new Promise((resolve, reject) => {
+    instance({
+      method: 'post',
+      url,
+      data,
+      params,
+      headers
+    }).then(
+      (data) => {
+        resolve(data)
+      }),
+      (err) => {
+        reject(err)
+      }
+  })
 };
 

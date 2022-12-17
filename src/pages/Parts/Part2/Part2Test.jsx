@@ -19,6 +19,8 @@ import Header from "../Header/Header";
 import "./Part2Test.scss";
 import { btnClickExport } from "../../../util/js/downloadFile";
 
+import axios from "axios";
+
 // 添加对应的工具信息
 const mouseToolChain = [
   { name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
@@ -92,6 +94,11 @@ export function Part2Test() {
     }
   }, [data]);
 
+  // axios
+  //   .get("http://43.142.168.114:8001/MedicalSystem/file/testConnect")
+  //   .then((res) => {
+  //     console.log(res);
+  //   });
   // 获取鼠标移动信息和滚动事件
   const handleMouseMove = (e) => {
     setPosition({
