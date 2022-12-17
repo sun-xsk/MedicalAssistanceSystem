@@ -159,6 +159,7 @@ export function Part1() {
       setViewPort(cornerstone.getViewport(imgRef.current));
     }
   };
+  
   return (
     <div className="Part1">
       <Header />

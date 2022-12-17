@@ -5,19 +5,18 @@ import {
   cornerstoneWADOImageLoader,
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
+import extend from "../../../util/js/extend";
+import getImagePixelModule from "../../../util/js/getImagePixelModule";
+import metaDataProvider from "../../../util/js/meteDataProvider";
+
 import {
   getFileInfo,
   uploadFile,
   getFilePath,
 } from "../../../util/api/httpUtil";
-import extend from '../../../util/js/extend'
-import getImagePixelModule from '../../../util/js/getImagePixelModule'
-import  metaDataProvider from '../../../util/js/meteDataProvider'
 
-import httpUtil from "../../../util/axios/httpUtil";
 import Header from "../Header/Header";
 import "./Part2Test.scss";
-// import axios from "axios";
 import { btnClickExport } from "../../../util/js/downloadFile";
 
 // 添加对应的工具信息
@@ -42,7 +41,6 @@ const mouseToolChain = [
 ];
 
 export function Part2Test() {
-  const [ids, setIds] = useState([0]);
   const fileRef = useRef(null);
   const imgRef = useRef(null);
   const picRef = useRef(null);
@@ -50,7 +48,7 @@ export function Part2Test() {
     voi: { windowWidth: "", windowCenter: "" },
     scale: 0,
   });
-  const [patientInfo, setPatientInfo] = useState({})
+  const [patientInfo, setPatientInfo] = useState({});
   const [isShow, setIsShow] = useState(false);
 
   let upTb = false;
@@ -59,15 +57,58 @@ export function Part2Test() {
   let fileImgId = ""; // 当前选中的 DCM文件 imageId
   let imageIds = [];
 
-  // httpUtil.getRegisterStatus().then((res) => {
-  //   console.log(res);
-  // });
-  // axios
-  //   .get("http://43.142.168.114:8001/MedicalSystem/file/testConnect")
-  //   .then((res) => {
-  //     console.log(res);
-  //   });
-  //   判断是需要哪一个工具
+  let [data, setData] = useState("");
+  useEffect(() => {
+    cornerstone.enable(imgRef.current);
+    cornerstone.enable(picRef.current);
+  }, []);
+  useEffect(() => {
+    let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null;
+    console.log(path);
+    if (path) {
+      let images = path[Object.keys(path)[0]];
+      //imageIds初始化及排序
+      let imageIds = images.map((item) => {
+        return "wadouri:" + item;
+      });
+      imageIds.sort((a, b) => {
+        return (
+          a.replace(/(.*\/)*([^.]+).*/gi, "$2") -
+          b.replace(/(.*\/)*([^.]+).*/gi, "$2")
+        );
+      });
+
+      let stack = {
+        currentImageIdIndex: 0,
+        imageIds,
+      };
+      cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
+        cornerstone.displayImage(imgRef.current, img);
+        cornerstone.displayImage(picRef.current, img);
+        cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
+        cornerstoneTools.addToolState(imgRef.current, "stack", stack);
+      });
+      setPatientInfo(JSON.parse(sessionStorage.getItem("FILE_INFO")));
+      setIsShow(true);
+    }
+  }, [data]);
+
+  const handleMouseMove = (e) => {
+    setPosition({
+      x: e.nativeEvent.offsetX,
+      y: e.nativeEvent.offsetX,
+    });
+    if (imgRef.current && isShow) {
+      setViewPort(cornerstone.getViewport(imgRef.current));
+    }
+  };
+  const handleWheel = () => {
+    if (imgRef.current && isShow) {
+      setViewPort(cornerstone.getViewport(imgRef.current));
+    }
+  };
+
+  // 选择使用对应工具
   function chooseTool(name) {
     return () => {
       for (let i = 0; i < mouseToolChain.length; i++) {
@@ -113,6 +154,7 @@ export function Part2Test() {
     // viewport.voi.windowCenter = 30;
     // cornerstone.setViewport(imgRef.current, viewport);
   }
+  // 图像去噪
   function LimpidPic() {
     // 拿到当前的canvas组件
     const canvas = document.getElementsByClassName("cornerstone-canvas")[0];
@@ -150,109 +192,48 @@ export function Part2Test() {
     ctx.putImageData(imageData, 0, 0);
   }
 
-  cornerstone.metaData.addProvider(function (type, imageId) {
-    if (type == "imagePixelModule" && imageId == fileImgId) {
-      return getImagePixelModule(result);
-    }
-    return metaDataProvider(type, imageId);
-  });
-
-  //   上传图片
+  // 上传文件
   function uploadFiles() {
     fileRef.current.click();
   }
-  //   加载图片
-  function loadFiles(e) {
+  async function loadFiles(e) {
     let files = e.target.files;
-    if (!files || !files.length) return;
-    const formdata = new FormData();
-    formdata.append("file", files[0]);
-    console.log(files[0]);
-    // httpUtil.upLoadFile(files[0]).then((res) => {
-    //   console.log(res);
-    // });
-    imageIds = [];
-    for (let i = 1; i < files.length; i++) {
-      let file = files[i];
-      let read = new FileReader();
-      imageIds[i - 1] = "";
-      read.readAsArrayBuffer(file);
-      read.onload = function () {
-        result = dicomParser.parseDicom(new Uint8Array(this.result));
-        let url = "http://" + file.name;
-        fileImgId = "wadouri:" + url;
-        // imageIds.push(fileImgId)
-        imageIds[i - 1] = fileImgId;
-        //设置映射关系
-        cornerstoneWADOImageLoader.wadouri.dataSetCacheManager.add(url, result);
-        cornerstone.imageCache.putImageLoadObject(
-          fileImgId,
-          cornerstoneWADOImageLoader.wadouri.loadImageFromPromise(
-            new Promise((res) => {
-              res(result);
-            }),
-            fileImgId
-          )
-        );
-
-        const stack = {
-          currentImageIdIndex: 0,
-          imageIds,
-        };
-
-        //加载dcm文件并缓存
-        cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
-          cornerstone.displayImage(imgRef.current, img);
-          cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
-          cornerstoneTools.addToolState(imgRef.current, "stack", stack);
-        });
-      };
+    let formdata = new FormData();
+    let demoData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formdata.append("file", files[i]);
     }
+    demoData.append("file", files[0]);
+    console.log(formdata.getAll("file"));
+    uploadFile(formdata);
+
+    let fileInfo = await getFileInfo(demoData);
+    console.log(fileInfo);
+    setPatientInfo(fileInfo.data);
+    sessionStorage.setItem("FILE_INFO", JSON.stringify(fileInfo.data));
+    let { PatientID, PatientAge, PatiendAddress } = fileInfo.data;
+    let filePath = await getFilePath(PatientID);
+    console.log("filePath", filePath);
+    sessionStorage.setItem("FILE_PATH", JSON.stringify(filePath.data));
+    setData(sessionStorage.getItem("FILE_PATH"));
+    setIsShow(true);
   }
 
   // 下载文件
   function downLoad() {
-    const data = { test1: [[1, 1, 1], [1, 1, 1, 1]], test2: [[0, 0, 0, 0], [0, 0, 0]] };
+    const data = {
+      test1: [
+        [1, 1, 1],
+        [1, 1, 1, 1],
+      ],
+      test2: [
+        [0, 0, 0, 0],
+        [0, 0, 0],
+      ],
+    };
     btnClickExport(data);
   }
 
-  useEffect(() => {
-    cornerstone.enable(imgRef.current);
-    const StackScrollMouseWheelTool =
-      cornerstoneTools.StackScrollMouseWheelTool;
-    cornerstoneTools.addTool(StackScrollMouseWheelTool);
-    cornerstoneTools.setToolActive("StackScrollMouseWheel", {});
-    extend();
-  }, []);
-
-  useEffect(() => {
-    let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null
-    console.log(path);
-    if (path) {
-      let images = path[Object.keys(path)[0]];
-      //imageIds初始化及排序
-      let imageIds = images.map((item) => {
-        return "wadouri:" + item;
-      });
-      imageIds.sort((a, b) => {
-        return a.replace(/(.*\/)*([^.]+).*/ig, "$2") - b.replace(/(.*\/)*([^.]+).*/ig, "$2")
-      })
-
-      let stack = {
-        currentImageIdIndex: 0,
-        imageIds,
-      };
-      cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
-        cornerstone.displayImage(imgRef.current, img);
-        cornerstone.displayImage(picRef.current, img);
-        cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
-        cornerstoneTools.addToolState(imgRef.current, "stack", stack);
-      });
-      setPatientInfo(JSON.parse(sessionStorage.getItem("FILE_INFO")))
-      setIsShow(true)
-    }
-
-  }, [data])
   return (
     <div className="Part2Test">
       <Header />
@@ -304,21 +285,16 @@ export function Part2Test() {
       <div className="p-detail">
         <div className="p-picList">
           <div className="showPic">
-            {/* {ids.map((item) => {
-              return <div className="pic" key={item}></div>;
-            })} */}
             <div className="pic" ref={picRef}></div>;
           </div>
         </div>
 
-        <div className="detailPicBox">
-          <div
-            className="detailPic"
-            id="test"
-            onContextMenu={() => false}
-            onMouseDown={() => false}
-            ref={imgRef}
-          ></div>
+        <div
+          className="detailPicBox"
+          onMouseMove={(e) => handleMouseMove(e)}
+          onWheel={handleWheel}
+        >
+          <div className="detailPic" id="test" ref={imgRef}></div>
           {isShow ? (
             <div className="position">
               <span>X:{position.x}</span>
@@ -330,7 +306,6 @@ export function Part2Test() {
             <div className="viewPort">
               <div>Zoom:{Math.floor(viewPort.scale * 100)}%</div>
               <div>
-                {" "}
                 WW/WL:
                 <span>
                   {Math.floor(viewPort.voi.windowWidth)}/
@@ -342,9 +317,20 @@ export function Part2Test() {
 
           {isShow ? (
             <div className="PatientInfo">
-              <p>Patiend ID : {patientInfo.PatientID ? patientInfo.PatientID : "undefined"}</p>
-              <p>Patinet Age : {patientInfo.PatientAge ? patientInfo.PatientAge : "undefined"}</p>
-              <p>Patinet Address : {patientInfo.PatientAddress ? patientInfo.PatiendAddress : "undefined"}</p>
+              <p>
+                Patiend ID :
+                {patientInfo.PatientID ? patientInfo.PatientID : "undefined"}
+              </p>
+              <p>
+                Patinet Age :
+                {patientInfo.PatientAge ? patientInfo.PatientAge : "undefined"}
+              </p>
+              <p>
+                Patinet Address :
+                {patientInfo.PatientAddress
+                  ? patientInfo.PatiendAddress
+                  : "undefined"}
+              </p>
             </div>
           ) : null}
         </div>
