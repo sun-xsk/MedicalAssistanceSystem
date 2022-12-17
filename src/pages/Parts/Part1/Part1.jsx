@@ -9,13 +9,11 @@ import {
 import {
   testConnect,
   uploadFile,
-  getInstanceNumbers,
-  getDicomFile,
   getFileInfo,
   getMainShow
 } from "../../../util/api/httpUtil";
 
-import Header from "./Header/Header";
+import Header from "../Header/Header";
 import "./Part1.scss";
 
 const mouseToolChain = [
