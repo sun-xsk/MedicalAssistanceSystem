@@ -94,11 +94,11 @@ export function Part2Test() {
     }
   }, [data]);
 
-  // axios
-  //   .get("http://43.142.168.114:8001/MedicalSystem/file/testConnect")
-  //   .then((res) => {
-  //     console.log(res);
-  //   });
+  axios
+    .get("http://43.142.168.114:8001/MedicalSystem/file/testConnect")
+    .then((res) => {
+      console.log(res);
+    });
   // 获取鼠标移动信息和滚动事件
   const handleMouseMove = (e) => {
     setPosition({
