@@ -7,9 +7,12 @@ import {
 } from "../../../util/js/cornerstone";
 
 import {
-  getFileInfo,
+  testConnect,
   uploadFile,
-  getFilePath,
+  getInstanceNumbers,
+  getDicomFile,
+  getFileInfo,
+  getMainShow
 } from "../../../util/api/httpUtil";
 
 import Header from "./Header/Header";
@@ -52,33 +55,31 @@ export function Part1() {
   const imgRef = useRef(null);
   const picRef = useRef(null);
   const [viewPort, setViewPort] = useState({
-    voi: { windowWidth: "", windowCenter: "" },
-    scale: 0,
+    // voi: { windowWidth: "", windowCenter: "" },
+    // scale: 0,
   });
   const [patientInfo,setPatientInfo] = useState({})
   const [isShow, setIsShow] = useState(false);
   let [data,setData]=useState("")
+  let [fileLength,setFileLength]=useState(0)
+  let [seriesUID,setSeriesUID] = useState()
+
   useEffect(() => {
     cornerstone.enable(imgRef.current);
-    cornerstone.enable(picRef.current);
-    // const StackScrollMouseWheelTool =
-    //   cornerstoneTools.StackScrollMouseWheelTool;
-    // cornerstoneTools.addTool(StackScrollMouseWheelTool);
-    // cornerstoneTools.setToolActive("StackScrollMouseWheel", {});  
+    cornerstone.enable(picRef.current); 
   }, []);
+
+
+  let getImageId = (seriesInstanceUID,instanceNumber) =>{
+    console.log(instanceNumber)
+    return 'wadouri:'+'http://43.142.168.114:8001/MedicalSystem/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber?'+
+            `seriesInstanceUID=${seriesInstanceUID}&instanceNumber=${instanceNumber}`
+  }
+
   useEffect(()=>{
-    let path=JSON.parse(sessionStorage.getItem("FILE_PATH")) || null
-    console.log(path);
-    if(path){ 
-      let images = path[Object.keys(path)[0]];
-      //imageIds初始化及排序
-      let imageIds = images.map((item) => {
-        return "wadouri:" + item;
-      });
-      imageIds.sort((a,b)=>{
-        return a.replace(/(.*\/)*([^.]+).*/ig,"$2") - b.replace(/(.*\/)*([^.]+).*/ig,"$2")
-      })
-  
+      let path=JSON.parse(sessionStorage.getItem("FILE_PATH")) || null
+      if(path){
+      let imageIds=path
       let stack = {
         currentImageIdIndex: 0,
         imageIds,
@@ -89,7 +90,8 @@ export function Part1() {
         cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
         cornerstoneTools.addToolState(imgRef.current, "stack", stack);
       });
-      setPatientInfo(JSON.parse( sessionStorage.getItem("FILE_INFO"))) 
+
+      setPatientInfo(JSON.parse(sessionStorage.getItem('PATIENT_INFO')))
       setIsShow(true)
     }
    
@@ -126,22 +128,25 @@ export function Part1() {
     }
     demoData.append("file", files[0]);
     console.log(formdata.getAll("file"));
+    //1
     uploadFile(formdata);
 
+    //2
     let fileInfo = await getFileInfo(demoData);
-    console.log(fileInfo);
-    setPatientInfo(fileInfo.data)
-    sessionStorage.setItem("FILE_INFO",JSON.stringify(fileInfo.data))
-    let {
-      PatientID,
-      PatientAge,
-      PatiendAddress
-    } = fileInfo.data
-    let filePath = await getFilePath(PatientID);
-    console.log('filePath',filePath);
-    sessionStorage.setItem("FILE_PATH",JSON.stringify(filePath.data))
+
+    //3
+    let mainShow = await getMainShow(demoData)
+    let patientInfo={...fileInfo.data,...mainShow.data[0]}
+
+    //添加文件id
+    let filePaths=[]
+    for(let i=1;i<=files.length;i++){
+      filePaths.push(getImageId(patientInfo.seriesInstanceUID,i))
+    }
+    sessionStorage.setItem("FILE_PATH",JSON.stringify(filePaths))
+    sessionStorage.setItem("PATIENT_INFO",JSON.stringify(patientInfo))
     setData(sessionStorage.getItem("FILE_PATH"))
-    setIsShow(true);
+    setIsShow(true)
   }
  
   const handleMouseMove = (e) => {
@@ -266,13 +271,13 @@ export function Part1() {
           ) : null}
           {isShow ? (
             <div className="viewPort">
-              <div>Zoom:{Math.floor(viewPort.scale * 100)}%</div>
+              {/* <div>Zoom:{Math.floor(viewPort.scale * 100)}%</div> */}
               <div>
                 {" "}
                 WW/WL:
                 <span>
-                  {Math.floor(viewPort.voi.windowWidth)}/
-                  {Math.floor(viewPort.voi.windowCenter)}
+                  {/* {Math.floor(viewPort.voi.windowWidth)}/
+                  {Math.floor(viewPort.voi.windowCenter)} */}
                 </span>
               </div>
             </div>
