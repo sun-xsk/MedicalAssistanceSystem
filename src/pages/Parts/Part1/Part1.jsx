@@ -54,24 +54,23 @@ export function Part1() {
   const fileRef = useRef(null);
   const imgRef = useRef(null);
   const picRef = useRef(null);
-  const [viewPort, setViewPort] = useState({
-    // voi: { windowWidth: "", windowCenter: "" },
-    // scale: 0,
-  });
+  let [viewPort, setViewPort] = useState({});
   const [patientInfo,setPatientInfo] = useState({})
   const [isShow, setIsShow] = useState(false);
   let [data,setData]=useState("")
-  let [fileLength,setFileLength]=useState(0)
-  let [seriesUID,setSeriesUID] = useState()
 
   useEffect(() => {
     cornerstone.enable(imgRef.current);
     cornerstone.enable(picRef.current); 
+    setViewPort( viewPort =>({
+      ...viewPort,
+      voi: { windowWidth: "", windowCenter: "" },
+      scale: 0,
+    }))
   }, []);
 
 
   let getImageId = (seriesInstanceUID,instanceNumber) =>{
-    console.log(instanceNumber)
     return 'wadouri:'+'http://43.142.168.114:8001/MedicalSystem/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber?'+
             `seriesInstanceUID=${seriesInstanceUID}&instanceNumber=${instanceNumber}`
   }
@@ -128,13 +127,10 @@ export function Part1() {
     }
     demoData.append("file", files[0]);
     console.log(formdata.getAll("file"));
-    //1
     uploadFile(formdata);
 
-    //2
     let fileInfo = await getFileInfo(demoData);
 
-    //3
     let mainShow = await getMainShow(demoData)
     let patientInfo={...fileInfo.data,...mainShow.data[0]}
 
@@ -155,12 +151,13 @@ export function Part1() {
       y: e.nativeEvent.offsetX,
     });
     if (imgRef.current && isShow) {
-      setViewPort(cornerstone.getViewport(imgRef.current));
+      setViewPort(viewPort =>({...viewPort,...cornerstone.getViewport(imgRef.current)}) );
     }
   };
   const handleWheel = () => {
     if (imgRef.current && isShow) {
-      setViewPort(cornerstone.getViewport(imgRef.current));
+      // console.log(cornerstone.getViewport(imgRef.current));
+      setViewPort(viewPort =>({...viewPort,...cornerstone.getViewport(imgRef.current)}));
     }
   };
   return (
@@ -169,47 +166,47 @@ export function Part1() {
       <div className="toolBar">
       <button className="singleTool" onClick={chooseTool("StackScrollMouseWheel")}>
           <span className="iconfont toolIcons">&#xe6f6;</span>
-          <div className="txt">Scroll</div>
+          <div className="txt">滚动切片</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("Wwwc")}>
           <span className="iconfont toolIcons">&#xe635;</span>
-          <div className="txt">Wwwc</div>
+          <div className="txt">窗宽/窗位</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("ZoomMouseWheel")}>
           <span className="iconfont toolIcons">&#xe7ca;</span>
-          <div className="txt">Zoom</div>
+          <div className="txt">缩放</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("Magnify")}>
           <span className="iconfont toolIcons">&#xe662;</span>
-          <div className="txt">Magnify</div>
+          <div className="txt">放大镜</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("Pan")}>
           <span className="iconfont toolIcons">&#xeb70;</span>
-          <div className="txt">Pan</div>
+          <div className="txt">移动</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("Angle")}>
           <span className="iconfont toolIcons">&#xe631;</span>
-          <div className="txt">Angle</div>
+          <div className="txt">角度测量</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("Length")}>
           <span className="iconfont toolIcons">&#xedda;</span>
-          <div className="txt">Length</div>
+          <div className="txt">长度测量</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("Eraser")}>
           <span className="iconfont toolIcons">&#xe606;</span>
-          <div className="txt">Eraser</div>
+          <div className="txt">橡皮擦</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("CircleScissors")}>
           <span className="iconfont toolIcons">&#xe61b;</span>
-          <div className="txt">Circle</div>
+          <div className="txt">圆形标注</div>
         </button>
 
         <button
@@ -217,17 +214,17 @@ export function Part1() {
           onClick={chooseTool("RectangleScissors")}
         >
           <span className="iconfont toolIcons">&#xe604;</span>
-          <div className="txt">Rectangle</div>
+          <div className="txt">矩形标注</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("FreehandScissors")}>
           <span className="iconfont toolIcons">&#xe6ec;</span>
-          <div className="txt">Freehand</div>
+          <div className="txt">自由标注</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("Brush")}>
           <span className="iconfont toolIcons">&#xe670;</span>
-          <div className="txt">Brush</div>
+          <div className="txt">画笔工具</div>
         </button>
 
         <button className="uploadTool" onClick={uploadFiles}>
@@ -271,13 +268,13 @@ export function Part1() {
           ) : null}
           {isShow ? (
             <div className="viewPort">
-              {/* <div>Zoom:{Math.floor(viewPort.scale * 100)}%</div> */}
+              <div>Zoom:{Math.floor(viewPort.scale * 100)}%</div>
               <div>
                 {" "}
                 WW/WL:
                 <span>
-                  {/* {Math.floor(viewPort.voi.windowWidth)}/
-                  {Math.floor(viewPort.voi.windowCenter)} */}
+                  {Math.floor(viewPort.voi.windowWidth)}/
+                  {Math.floor(viewPort.voi.windowCenter)}
                 </span>
               </div>
             </div>
@@ -285,11 +282,20 @@ export function Part1() {
 
           {isShow ? (
             <div className="PatientInfo">
-              <p>Patiend ID : {patientInfo.PatientID ? patientInfo.PatientID : "undefined"}</p>
+              <p>Patient Name : {patientInfo.patientName ? patientInfo.patientName : "undefined"}</p>
+              <p>Patient ID : {patientInfo.PatientID ? patientInfo.PatientID : "undefined"}</p>
               <p>Patinet Age : {patientInfo.PatientAge ?  patientInfo.PatientAge : "undefined" }</p>
               <p>Patinet Address : {patientInfo.PatientAddress ?  patientInfo.PatiendAddress : "undefined" }</p>
             </div>
           ) : null}
+          {isShow ? (
+            <div className="study">
+                <p>Modality : {patientInfo.modality ? patientInfo.modality : 'undefined'}</p>
+                <p>Study Date : {patientInfo.studyDate ? patientInfo.studyDate : "undefined"}</p>
+                <p>Accession Number : {patientInfo.accessionNumber ? patientInfo.accessionNumber : 'undefined'}</p>
+            </div>
+          ) :null
+          }
         </div>
       </div>
     </div>
