@@ -5,23 +5,20 @@ import {
   cornerstoneWADOImageLoader,
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
-import extend from "../../../util/js/extend";
-import getImagePixelModule from "../../../util/js/getImagePixelModule";
-import metaDataProvider from "../../../util/js/meteDataProvider";
+// import extend from "../../../util/js/extend";
+// import getImagePixelModule from "../../../util/js/getImagePixelModule";
+// import metaDataProvider from "../../../util/js/meteDataProvider";
 
 import {
   getFileInfo,
   uploadFile,
-  getFilePath,
   testConnect,
-  getDicomFileBySeriesInstanceUIDAndInstanceNumber,
 } from "../../../util/api/httpUtil";
 
 import Header from "../Header/Header";
 import "./Part2Test.scss";
 import { btnClickExport } from "../../../util/js/downloadFile";
 
-import axios from "axios";
 
 // 添加对应的工具信息
 const mouseToolChain = [
