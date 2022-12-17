@@ -41,6 +41,7 @@ const mouseToolChain = [
 ];
 
 export function Part2Test() {
+  const [position, setPosition] = useState({ x: 0, y: 0 });
   const fileRef = useRef(null);
   const imgRef = useRef(null);
   const picRef = useRef(null);
@@ -51,11 +52,9 @@ export function Part2Test() {
   const [patientInfo, setPatientInfo] = useState({});
   const [isShow, setIsShow] = useState(false);
 
+  // 用于控制图像上下翻转
   let upTb = false;
   let upLr = false;
-  let result = undefined; // 存储当前选中的 DCM文件解析后的 DataSet 对象
-  let fileImgId = ""; // 当前选中的 DCM文件 imageId
-  let imageIds = [];
 
   let [data, setData] = useState("");
   useEffect(() => {
@@ -93,6 +92,7 @@ export function Part2Test() {
     }
   }, [data]);
 
+  // 获取鼠标移动信息和滚动事件
   const handleMouseMove = (e) => {
     setPosition({
       x: e.nativeEvent.offsetX,
@@ -205,18 +205,20 @@ export function Part2Test() {
     }
     demoData.append("file", files[0]);
     console.log(formdata.getAll("file"));
-    uploadFile(formdata);
+    uploadFile(formdata).then((res) => {
+      console.log(res);
+    });
 
-    let fileInfo = await getFileInfo(demoData);
-    console.log(fileInfo);
-    setPatientInfo(fileInfo.data);
-    sessionStorage.setItem("FILE_INFO", JSON.stringify(fileInfo.data));
-    let { PatientID, PatientAge, PatiendAddress } = fileInfo.data;
-    let filePath = await getFilePath(PatientID);
-    console.log("filePath", filePath);
-    sessionStorage.setItem("FILE_PATH", JSON.stringify(filePath.data));
-    setData(sessionStorage.getItem("FILE_PATH"));
-    setIsShow(true);
+    // let fileInfo = await getFileInfo(demoData);
+    // console.log(fileInfo);
+    // setPatientInfo(fileInfo.data);
+    // sessionStorage.setItem("FILE_INFO", JSON.stringify(fileInfo.data));
+    // let { PatientID, PatientAge, PatiendAddress } = fileInfo.data;
+    // let filePath = await getFilePath(PatientID);
+    // console.log("filePath", filePath);
+    // sessionStorage.setItem("FILE_PATH", JSON.stringify(filePath.data));
+    // setData(sessionStorage.getItem("FILE_PATH"));
+    // setIsShow(true);
   }
 
   // 下载文件
@@ -295,7 +297,7 @@ export function Part2Test() {
           onWheel={handleWheel}
         >
           <div className="detailPic" id="test" ref={imgRef}></div>
-          {isShow ? (
+          {/* {isShow ? (
             <div className="position">
               <span>X:{position.x}</span>
               &nbsp;
@@ -313,9 +315,9 @@ export function Part2Test() {
                 </span>
               </div>
             </div>
-          ) : null}
+          ) : null} */}
 
-          {isShow ? (
+          {/* {isShow ? (
             <div className="PatientInfo">
               <p>
                 Patiend ID :
@@ -332,7 +334,7 @@ export function Part2Test() {
                   : "undefined"}
               </p>
             </div>
-          ) : null}
+          ) : null} */}
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@ import axios from "axios";
 import { message } from "antd";
 
 const instance = axios.create({
-  baseURL: "192.168.112.100:50000/MedicalSystem",
+  baseURL: "/MedicalSystem",
   withCredentials: true,
   timeout: 100000,
 });
@@ -51,7 +51,7 @@ const handleNetError = (errStatus) => {
         errMessage = `其他连接错误 --${errStatus}`;
     }
   } else {
-    errMessage = `无法连接到服务器！`;
+    errMessage = `无法连接到服务器！`; 
   }
 
   message.error(errMessage);
