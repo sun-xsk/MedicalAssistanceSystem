@@ -1,18 +1,17 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   cornerstone,
-  dicomParser,
-  cornerstoneWADOImageLoader,
+  // dicomParser,
+  // cornerstoneWADOImageLoader,
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
 
 import {
   testConnect,
   uploadFile,
-  getInstanceNumbers,
-  getDicomFile,
+  // getInstanceNumbers,
+  // getDicomFile,
   getFileInfo,
-  getMainShow
 } from "../../../util/api/httpUtil";
 
 import Header from "./Header/Header";
@@ -57,7 +56,6 @@ export function Part1() {
   let [viewPort, setViewPort] = useState({});
   const [patientInfo,setPatientInfo] = useState({})
   const [isShow, setIsShow] = useState(false);
-  let [data,setData]=useState("")
 
   useEffect(() => {
     cornerstone.enable(imgRef.current);
@@ -89,12 +87,10 @@ export function Part1() {
         cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
         cornerstoneTools.addToolState(imgRef.current, "stack", stack);
       });
-
       setPatientInfo(JSON.parse(sessionStorage.getItem('PATIENT_INFO')))
       setIsShow(true)
     }
-   
-  },[data])
+  },[isShow])
 
   function chooseTool(name) {
     return () => {
@@ -130,18 +126,19 @@ export function Part1() {
     uploadFile(formdata);
 
     let fileInfo = await getFileInfo(demoData);
-
-    let mainShow = await getMainShow(demoData)
-    let patientInfo={...fileInfo.data,...mainShow.data[0]}
-
+    console.log(fileInfo);
+    // let mainShow = await getMainShow(demoData)
+    // console.log(mainShow);
+    //此处
+    let patientInfo={...fileInfo.data}
+    console.log(patientInfo)
     //添加文件id
     let filePaths=[]
     for(let i=1;i<=files.length;i++){
-      filePaths.push(getImageId(patientInfo.seriesInstanceUID,i))
+      filePaths.push(getImageId(patientInfo.SeriesInstanceUID,i))
     }
     sessionStorage.setItem("FILE_PATH",JSON.stringify(filePaths))
     sessionStorage.setItem("PATIENT_INFO",JSON.stringify(patientInfo))
-    setData(sessionStorage.getItem("FILE_PATH"))
     setIsShow(true)
   }
  
@@ -282,17 +279,17 @@ export function Part1() {
 
           {isShow ? (
             <div className="PatientInfo">
-              <p>Patient Name : {patientInfo.patientName ? patientInfo.patientName : "undefined"}</p>
+              <p>Patient Name : {patientInfo.PatientName ? patientInfo.PatientName : "undefined"}</p>
               <p>Patient ID : {patientInfo.PatientID ? patientInfo.PatientID : "undefined"}</p>
               <p>Patinet Age : {patientInfo.PatientAge ?  patientInfo.PatientAge : "undefined" }</p>
-              <p>Patinet Address : {patientInfo.PatientAddress ?  patientInfo.PatiendAddress : "undefined" }</p>
+              <p>Patinet Address : {patientInfo.PatientAddress ?  patientInfo.PatientAddress : "undefined" }</p>
             </div>
           ) : null}
           {isShow ? (
             <div className="study">
-                <p>Modality : {patientInfo.modality ? patientInfo.modality : 'undefined'}</p>
-                <p>Study Date : {patientInfo.studyDate ? patientInfo.studyDate : "undefined"}</p>
-                <p>Accession Number : {patientInfo.accessionNumber ? patientInfo.accessionNumber : 'undefined'}</p>
+                <p>Modality : {patientInfo.Modality ? patientInfo.Modality : 'undefined'}</p>
+                <p>Study Date : {patientInfo.StudyDate ? patientInfo.StudyDate : "undefined"}</p>
+                <p>Accession Number : {patientInfo.AccessionNumber ? patientInfo.AccessionNumber : 'undefined'}</p>
             </div>
           ) :null
           }
