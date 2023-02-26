@@ -8,9 +8,12 @@ import {
  
 
 import {
-  getFileInfo,
+  testConnect,
   uploadFile,
-  getFilePath,
+  getInstanceNumbers,
+  getDicomFile,
+  getFileInfo,
+  getMainShow
 } from "../../../util/api/httpUtil";
 
 import Header from "../Header/Header";
@@ -52,34 +55,31 @@ export function Part1() {
   const fileRef = useRef(null);
   const imgRef = useRef(null);
   const picRef = useRef(null);
-  const [viewPort, setViewPort] = useState({
-    voi: { windowWidth: "", windowCenter: "" },
-    scale: 0,
-  });
+  let [viewPort, setViewPort] = useState({});
   const [patientInfo,setPatientInfo] = useState({})
   const [isShow, setIsShow] = useState(false);
   let [data,setData]=useState("")
+
   useEffect(() => {
     cornerstone.enable(imgRef.current);
-    cornerstone.enable(picRef.current);
-    // const StackScrollMouseWheelTool =
-    //   cornerstoneTools.StackScrollMouseWheelTool;
-    // cornerstoneTools.addTool(StackScrollMouseWheelTool);
-    // cornerstoneTools.setToolActive("StackScrollMouseWheel", {});  
+    cornerstone.enable(picRef.current); 
+    setViewPort( viewPort =>({
+      ...viewPort,
+      voi: { windowWidth: "", windowCenter: "" },
+      scale: 0,
+    }))
   }, []);
+
+
+  let getImageId = (seriesInstanceUID,instanceNumber) =>{
+    return 'wadouri:'+'http://43.142.168.114:8001/MedicalSystem/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber?'+
+            `seriesInstanceUID=${seriesInstanceUID}&instanceNumber=${instanceNumber}`
+  }
+
   useEffect(()=>{
-    let path=JSON.parse(sessionStorage.getItem("FILE_PATH")) || null
-    console.log(path);
-    if(path){ 
-      let images = path[Object.keys(path)[0]];
-      //imageIds初始化及排序
-      let imageIds = images.map((item) => {
-        return "wadouri:" + item;
-      });
-      imageIds.sort((a,b)=>{
-        return a.replace(/(.*\/)*([^.]+).*/ig,"$2") - b.replace(/(.*\/)*([^.]+).*/ig,"$2")
-      })
-  
+      let path=JSON.parse(sessionStorage.getItem("FILE_PATH")) || null
+      if(path){
+      let imageIds=path
       let stack = {
         currentImageIdIndex: 0,
         imageIds,
@@ -90,7 +90,8 @@ export function Part1() {
         cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
         cornerstoneTools.addToolState(imgRef.current, "stack", stack);
       });
-      setPatientInfo(JSON.parse( sessionStorage.getItem("FILE_INFO"))) 
+
+      setPatientInfo(JSON.parse(sessionStorage.getItem('PATIENT_INFO')))
       setIsShow(true)
     }
    
@@ -130,19 +131,19 @@ export function Part1() {
     uploadFile(formdata);
 
     let fileInfo = await getFileInfo(demoData);
-    console.log(fileInfo);
-    setPatientInfo(fileInfo.data)
-    sessionStorage.setItem("FILE_INFO",JSON.stringify(fileInfo.data))
-    let {
-      PatientID,
-      PatientAge,
-      PatiendAddress
-    } = fileInfo.data
-    let filePath = await getFilePath(PatientID);
-    console.log('filePath',filePath);
-    sessionStorage.setItem("FILE_PATH",JSON.stringify(filePath.data))
+
+    let mainShow = await getMainShow(demoData)
+    let patientInfo={...fileInfo.data,...mainShow.data[0]}
+
+    //添加文件id
+    let filePaths=[]
+    for(let i=1;i<=files.length;i++){
+      filePaths.push(getImageId(patientInfo.seriesInstanceUID,i))
+    }
+    sessionStorage.setItem("FILE_PATH",JSON.stringify(filePaths))
+    sessionStorage.setItem("PATIENT_INFO",JSON.stringify(patientInfo))
     setData(sessionStorage.getItem("FILE_PATH"))
-    setIsShow(true);
+    setIsShow(true)
   }
  
   const handleMouseMove = (e) => {
@@ -151,12 +152,13 @@ export function Part1() {
       y: e.nativeEvent.offsetX,
     });
     if (imgRef.current && isShow) {
-      setViewPort(cornerstone.getViewport(imgRef.current));
+      setViewPort(viewPort =>({...viewPort,...cornerstone.getViewport(imgRef.current)}) );
     }
   };
   const handleWheel = () => {
     if (imgRef.current && isShow) {
-      setViewPort(cornerstone.getViewport(imgRef.current));
+      // console.log(cornerstone.getViewport(imgRef.current));
+      setViewPort(viewPort =>({...viewPort,...cornerstone.getViewport(imgRef.current)}));
     }
   };
   return (
@@ -165,47 +167,47 @@ export function Part1() {
       <div className="toolBar">
       <button className="singleTool" onClick={chooseTool("StackScrollMouseWheel")}>
           <span className="iconfont toolIcons">&#xe6f6;</span>
-          <div className="txt">Scroll</div>
+          <div className="txt">滚动切片</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("Wwwc")}>
           <span className="iconfont toolIcons">&#xe635;</span>
-          <div className="txt">Wwwc</div>
+          <div className="txt">窗宽/窗位</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("ZoomMouseWheel")}>
           <span className="iconfont toolIcons">&#xe7ca;</span>
-          <div className="txt">Zoom</div>
+          <div className="txt">缩放</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("Magnify")}>
           <span className="iconfont toolIcons">&#xe662;</span>
-          <div className="txt">Magnify</div>
+          <div className="txt">放大镜</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("Pan")}>
           <span className="iconfont toolIcons">&#xeb70;</span>
-          <div className="txt">Pan</div>
+          <div className="txt">移动</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("Angle")}>
           <span className="iconfont toolIcons">&#xe631;</span>
-          <div className="txt">Angle</div>
+          <div className="txt">角度测量</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("Length")}>
           <span className="iconfont toolIcons">&#xedda;</span>
-          <div className="txt">Length</div>
+          <div className="txt">长度测量</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("Eraser")}>
           <span className="iconfont toolIcons">&#xe606;</span>
-          <div className="txt">Eraser</div>
+          <div className="txt">橡皮擦</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("CircleScissors")}>
           <span className="iconfont toolIcons">&#xe61b;</span>
-          <div className="txt">Circle</div>
+          <div className="txt">圆形标注</div>
         </button>
 
         <button
@@ -213,17 +215,17 @@ export function Part1() {
           onClick={chooseTool("RectangleScissors")}
         >
           <span className="iconfont toolIcons">&#xe604;</span>
-          <div className="txt">Rectangle</div>
+          <div className="txt">矩形标注</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("FreehandScissors")}>
           <span className="iconfont toolIcons">&#xe6ec;</span>
-          <div className="txt">Freehand</div>
+          <div className="txt">自由标注</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("Brush")}>
           <span className="iconfont toolIcons">&#xe670;</span>
-          <div className="txt">Brush</div>
+          <div className="txt">画笔工具</div>
         </button>
 
         <button className="uploadTool" onClick={uploadFiles}>
@@ -281,11 +283,20 @@ export function Part1() {
 
           {isShow ? (
             <div className="PatientInfo">
-              <p>Patiend ID : {patientInfo.PatientID ? patientInfo.PatientID : "undefined"}</p>
+              <p>Patient Name : {patientInfo.patientName ? patientInfo.patientName : "undefined"}</p>
+              <p>Patient ID : {patientInfo.PatientID ? patientInfo.PatientID : "undefined"}</p>
               <p>Patinet Age : {patientInfo.PatientAge ?  patientInfo.PatientAge : "undefined" }</p>
               <p>Patinet Address : {patientInfo.PatientAddress ?  patientInfo.PatiendAddress : "undefined" }</p>
             </div>
           ) : null}
+          {isShow ? (
+            <div className="study">
+                <p>Modality : {patientInfo.modality ? patientInfo.modality : 'undefined'}</p>
+                <p>Study Date : {patientInfo.studyDate ? patientInfo.studyDate : "undefined"}</p>
+                <p>Accession Number : {patientInfo.accessionNumber ? patientInfo.accessionNumber : 'undefined'}</p>
+            </div>
+          ) :null
+          }
         </div>
       </div>
     </div>

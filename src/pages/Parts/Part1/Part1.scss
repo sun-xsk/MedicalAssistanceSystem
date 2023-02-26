@@ -150,22 +150,27 @@
 
       .position,
       .viewPort,
-      .PatientInfo{
+      .PatientInfo,
+      .study{
         position: absolute;
         color: #00a4d9;
       }
       .position{
-        left: 2vw;
-        bottom: 2vh;
+        left: 1vw;
+        bottom: 1vh;
       }
       .viewPort{
         width: 130px;
-        right: 2vw;
-        bottom: 2vh;
+        right: 1vw;
+        bottom: 1vh;
       }
       .PatientInfo{
-        left: 2vw;
-        top: 2vh;
+        left: 1vw;
+        top: 1vh;
+      }
+      .study{
+        right: 1vw;
+        top: 1vh;
       }
       .detailPic{
         position: relative;
