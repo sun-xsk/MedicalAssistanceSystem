@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import Item from "./Item/Item"
 import {
   cornerstone,
   // dicomParser,
@@ -52,14 +53,17 @@ export function Part1() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const fileRef = useRef(null);
   const imgRef = useRef(null);
-  const picRef = useRef(null);
+  // const picRef = useRef(null);
   let [viewPort, setViewPort] = useState({});
   const [patientInfo,setPatientInfo] = useState({})
   const [isShow, setIsShow] = useState(false);
+  let [data,setData] = useState([])
 
   useEffect(() => {
     cornerstone.enable(imgRef.current);
-    cornerstone.enable(picRef.current); 
+    // cornerstone.enable(picRef.current); 
+
+
     setViewPort( viewPort =>({
       ...viewPort,
       voi: { windowWidth: "", windowCenter: "" },
@@ -83,12 +87,12 @@ export function Part1() {
       };
       cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
         cornerstone.displayImage(imgRef.current, img);
-        cornerstone.displayImage(picRef.current, img);
         cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
         cornerstoneTools.addToolState(imgRef.current, "stack", stack);
       });
       setPatientInfo(JSON.parse(sessionStorage.getItem('PATIENT_INFO')))
       setIsShow(true)
+      setData(JSON.parse(sessionStorage.getItem("FILE_PATH")))
     }
   },[isShow])
 
@@ -127,8 +131,6 @@ export function Part1() {
 
     let fileInfo = await getFileInfo(demoData);
     console.log(fileInfo);
-    // let mainShow = await getMainShow(demoData)
-    // console.log(mainShow);
     //此处
     let patientInfo={...fileInfo.data}
     console.log(patientInfo)
@@ -140,6 +142,7 @@ export function Part1() {
     sessionStorage.setItem("FILE_PATH",JSON.stringify(filePaths))
     sessionStorage.setItem("PATIENT_INFO",JSON.stringify(patientInfo))
     setIsShow(true)
+    setData(filePaths)
   }
  
   const handleMouseMove = (e) => {
@@ -153,7 +156,6 @@ export function Part1() {
   };
   const handleWheel = () => {
     if (imgRef.current && isShow) {
-      // console.log(cornerstone.getViewport(imgRef.current));
       setViewPort(viewPort =>({...viewPort,...cornerstone.getViewport(imgRef.current)}));
     }
   };
@@ -242,10 +244,11 @@ export function Part1() {
       <div className="p-detail">
         <div className="p-picList">
           <div className="showPic">
-            {/* {ids.map((item) => {
-              return <div className="pic" key={item}></div>;
-            })} */}
-            <div className="pic" ref={picRef}></div>;
+            {data.map((item,index) => {
+              return <Item key={index} data={item}></Item>
+            })}
+            {/* <div className="pic" ref={picRef}></div>; */}
+            
           </div>
         </div>
 
@@ -254,6 +257,7 @@ export function Part1() {
           onMouseMove={(e) => handleMouseMove(e)}
           onWheel={handleWheel}
         >
+
           <div className="detailPic" ref={imgRef}></div>
 
           {isShow ? (
