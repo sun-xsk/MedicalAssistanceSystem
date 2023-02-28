@@ -1,0 +1,188 @@
+@import "../../../util/scss/all.scss";
+
+.Part1 {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  min-width: 1000px;
+  background-color: rgb(83, 83, 83);
+  @include flexBox();
+  flex-direction: column;
+  //   设置头部样式
+  .p-header {
+    width: 100%;
+    height: 5%;
+    background-color: #0d1117;
+    border-bottom: #106f8f solid 1px;
+    @include flexBox(flex-start);
+    a {
+      text-decoration: none;
+    }
+    .back-home {
+      margin-left: 25px;
+      height: 100%;
+      padding: 10px;
+      color: #00a4d9;
+      font-size: 13px;
+      @include flexBox(center);
+      .txt {
+        padding-left: 10px;
+        padding-top: 5px;
+      }
+    }
+  }
+
+  // 设置中间功能区样式
+  .toolBar {
+    width: 100%;
+    height: 14%;
+    background-color: #000000;
+    border-bottom: #106f8f solid 1px;
+    @include flexBox(flex-start);
+    //   设置单个功能样式
+    .singleTool {
+      height: 60%;
+      width: 70px;
+      margin-left: 15px;
+      color: #00a4d9;
+      transition: 0.4s;
+      background-color: #000000;
+      @include flexBox(center);
+      flex-direction: column;
+      .txt {
+        margin-top: 5px;
+        font-size: 14px;
+      }
+    }
+    .singleTool:first-child {
+      margin-left: 20px;
+    }
+    .singleTool:hover {
+      color: rgba(203, 201, 196, 0.6);
+    }
+    .uploadTool{
+      cursor: pointer;
+      position: absolute;
+      right: 4vw;
+      background-color: #00a4d9;
+      color: white;
+      width: 80px;
+      height: 35px;
+      font-size: 18px;
+    }
+    .uploadTool:hover{
+      background-color: #0aafe6;
+    }
+    .saveTool{
+      cursor: pointer;
+      position: absolute;
+      right: 11vw;
+      background-color: #00a4d9;
+      color: white;
+      width: 80px;
+      height: 35px;
+      font-size: 18px;
+    }
+    .saveTool:hover{
+      background-color: #0aafe6;
+    }
+  }
+  //  下面展示图片列表和大图
+  .p-detail {
+    width: 100%;
+    height: 81%;
+    background-color: #0d1117;
+    @include flexBox();
+    // 设置中间展示图片列表的样式
+    .p-picList {
+      width: 18%;
+      height: 100%;
+      background-color: #0d1117;
+      @include flexBox(center, center);
+      // 左边图片列表
+      .showPic {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        overflow-y: auto;
+        box-shadow: 0px -27px 18px -10px rgba(0, 0, 0, 0.5) inset;
+        .pic {
+          display: inline-block;
+          width: 80%;
+          height: 18%;
+          position: relative;
+          left: 9%;
+          margin-top: 30px;
+          background-color: rgb(0, 0, 0);
+          border: #00a4d9 solid 1px;
+          border-radius: 5px;
+        }
+      }
+      // 设置滚动条样式
+      .showPic::-webkit-scrollbar {
+        width: 5px;
+        height: 5px;
+      }
+      /* 滚动条里面小方块 */
+      .showPic::-webkit-scrollbar-thumb {
+        border-radius: 5px;
+        background: rgba(0, 164, 217, 0.4);
+      }
+      /* 滚动条里面轨道 */
+      .showPic::-webkit-scrollbar-track {
+        border-radius: 0;
+        background: rgba(43, 43, 43, 0.5);
+      }
+    }
+    // 展示大图
+    .detailPicBox {
+      width: 82%;
+      height: 99.4%;
+      background-color: rgb(0, 0, 0);
+      border: #087aa0 1px solid;
+      border-top: none;
+      border-radius: 3px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+
+      .position,
+      .viewPort,
+      .PatientInfo,
+      .study{
+        position: absolute;
+        color: #00a4d9;
+      }
+      .position{
+        left: 1vw;
+        bottom: 1vh;
+      }
+      .viewPort{
+        width: 130px;
+        right: 1vw;
+        bottom: 1vh;
+      }
+      .PatientInfo{
+        left: 1vw;
+        top: 1vh;
+      }
+      .study{
+        right: 1vw;
+        top: 1vh;
+      }
+      .detailPic{
+        position: relative;
+        height: 80vh;
+        width: 80vh;
+      }
+    }
+    
+    .toolIcons{
+      font-size: 30px;
+    }
+   
+
+  }
+}
