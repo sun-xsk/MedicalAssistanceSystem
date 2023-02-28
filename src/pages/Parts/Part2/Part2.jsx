@@ -1,14 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import Item from "./Item/Item";
-import {
-  cornerstone,
-  cornerstoneTools,
-} from "../../../util/js/cornerstone";
+import { cornerstone, cornerstoneTools } from "../../../util/js/cornerstone";
 
-import {
-  uploadFile,
-  getFileInfo,
-} from "../../../util/api/httpUtil";
+import { uploadFile, getFileInfo } from "../../../util/api/httpUtil";
 
 import Header from "./Header/Header";
 import "./Part2.scss";
@@ -22,23 +16,8 @@ const mouseToolChain = [
   },
   { name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
   {
-    name: "ZoomMouseWheel",
-    func: cornerstoneTools.ZoomMouseWheelTool,
-    config: {},
-  },
-  { name: "Pan", func: cornerstoneTools.PanTool, config: {} },
-  { name: "Magnify", func: cornerstoneTools.MagnifyTool, config: {} },
-  { name: "Angle", func: cornerstoneTools.AngleTool, config: {} },
-  { name: "Length", func: cornerstoneTools.LengthTool, config: {} },
-  { name: "Eraser", func: cornerstoneTools.EraserTool, config: {} },
-  {
-    name: "CircleScissors",
-    func: cornerstoneTools.CircleScissorsTool,
-    config: {},
-  },
-  {
-    name: "RectangleScissors",
-    func: cornerstoneTools.RectangleScissorsTool,
+    name: "Rotate",
+    func: cornerstoneTools.RotateTool,
     config: {},
   },
   {
@@ -46,7 +25,12 @@ const mouseToolChain = [
     func: cornerstoneTools.FreehandScissorsTool,
     config: {},
   },
-  { name: "Brush", func: cornerstoneTools.BrushTool },
+  {
+    name: "ZoomMouseWheel",
+    func: cornerstoneTools.ZoomMouseWheelTool,
+    config: {},
+  },
+  { name: "xxx", func: cornerstoneTools.clipBoxToDisplayedArea, config: {} },
 ];
 
 export function Part2() {
@@ -58,6 +42,9 @@ export function Part2() {
   const [patientInfo, setPatientInfo] = useState({});
   const [isShow, setIsShow] = useState(false);
   let [data, setData] = useState([]);
+  // 用于控制图像上下翻转
+  let upTb = false;
+  let upLr = false;
 
   useEffect(() => {
     cornerstone.enable(imgRef.current);
@@ -171,6 +158,57 @@ export function Part2() {
       }));
     }
   };
+  //   上下左右翻转图片
+  function upsideDownTb() {
+    upTb = !upTb;
+    cornerstone.setViewport(imgRef.current, {
+      vflip: upTb,
+    });
+  }
+  function upsideDownLr() {
+    upLr = !upLr;
+    cornerstone.setViewport(imgRef.current, {
+      hflip: upLr,
+    });
+  }
+
+   // 图像去噪
+   function LimpidPic() {
+    // 拿到当前的canvas组件
+    const canvas = document.getElementsByClassName("cornerstone-canvas")[0];
+    const ctx = canvas.getContext("2d");
+
+    // 获取图片像素信息
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let data = imageData.data;
+
+    // 获取一行的间隔为space，让一个像素点的数据间隔为4（是rgba颜色值）
+    const space = imageData.width * 4;
+    // console.log(space, "...", data.length);
+    // const singleSpace = 4;
+    for (let i = space; i < data.length - space; i += 4) {
+      // 直接跳过边界
+      if (i % space === 0 || (i + 4) % space === 0) {
+        continue;
+      } else {
+        const singleData =
+          data[i - space] +
+          data[i - space + 4] +
+          data[i - space - 4] +
+          data[i] +
+          data[i + 4] +
+          data[i - 4] +
+          data[i + space] +
+          data[i + space + 4] +
+          data[i + space - 4];
+        const avg = singleData / 9;
+        data[i] = avg;
+        data[i + 1] = avg;
+        data[i + 2] = avg;
+      }
+    }
+    ctx.putImageData(imageData, 0, 0);
+  }
 
   return (
     <div className="Part1">
@@ -187,60 +225,27 @@ export function Part2() {
 
         <button className="singleTool" onClick={chooseTool("Wwwc")}>
           <span className="iconfont toolIcons">&#xe635;</span>
-          <div className="txt">窗宽/窗位</div>
+          <div className="txt">图像加强</div>
+        </button>
+
+        <button className="singleTool" onClick={LimpidPic}>
+          <span className="iconfont toolIcons">&#xe7ca;</span>
+          <div className="txt">图像去噪</div>
+        </button>
+
+        <button className="singleTool" onClick={upsideDownTb}>
+          <span className="iconfont toolIcons">&#xe662;</span>
+          <div className="txt">上下翻转</div>
+        </button>
+
+        <button className="singleTool" onClick={upsideDownLr}>
+          <span className="iconfont toolIcons">&#xeb70;</span>
+          <div className="txt">左右翻转</div>
         </button>
 
         <button className="singleTool" onClick={chooseTool("ZoomMouseWheel")}>
-          <span className="iconfont toolIcons">&#xe7ca;</span>
-          <div className="txt">缩放</div>
-        </button>
-
-        <button className="singleTool" onClick={chooseTool("Magnify")}>
-          <span className="iconfont toolIcons">&#xe662;</span>
-          <div className="txt">放大镜</div>
-        </button>
-
-        <button className="singleTool" onClick={chooseTool("Pan")}>
-          <span className="iconfont toolIcons">&#xeb70;</span>
-          <div className="txt">移动</div>
-        </button>
-
-        <button className="singleTool" onClick={chooseTool("Angle")}>
           <span className="iconfont toolIcons">&#xe631;</span>
-          <div className="txt">角度测量</div>
-        </button>
-
-        <button className="singleTool" onClick={chooseTool("Length")}>
-          <span className="iconfont toolIcons">&#xedda;</span>
-          <div className="txt">长度测量</div>
-        </button>
-
-        <button className="singleTool" onClick={chooseTool("Eraser")}>
-          <span className="iconfont toolIcons">&#xe606;</span>
-          <div className="txt">橡皮擦</div>
-        </button>
-
-        <button className="singleTool" onClick={chooseTool("CircleScissors")}>
-          <span className="iconfont toolIcons">&#xe61b;</span>
-          <div className="txt">圆形标注</div>
-        </button>
-
-        <button
-          className="singleTool"
-          onClick={chooseTool("RectangleScissors")}
-        >
-          <span className="iconfont toolIcons">&#xe604;</span>
-          <div className="txt">矩形标注</div>
-        </button>
-
-        <button className="singleTool" onClick={chooseTool("FreehandScissors")}>
-          <span className="iconfont toolIcons">&#xe6ec;</span>
-          <div className="txt">自由标注</div>
-        </button>
-
-        <button className="singleTool" onClick={chooseTool("Brush")}>
-          <span className="iconfont toolIcons">&#xe670;</span>
-          <div className="txt">画笔工具</div>
+          <div className="txt">图像剪裁</div>
         </button>
 
         <button className="uploadTool" onClick={uploadFiles}>
