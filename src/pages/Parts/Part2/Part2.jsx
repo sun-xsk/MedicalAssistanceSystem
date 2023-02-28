@@ -273,7 +273,7 @@ export function Part2() {
             {/* <div className="pic" ref={picRef}></div>; */}
           </div>
         </div>
-
+ {/* // */}
         <div
           className="detailPicBox"
           onMouseMove={(e) => handleMouseMove(e)}
