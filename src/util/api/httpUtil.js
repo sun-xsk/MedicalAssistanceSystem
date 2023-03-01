@@ -24,8 +24,8 @@ export const getInstanceNumbers = (seriesInstanceUID) =>
     Get("/file/getInstanceNumbers", { seriesInstanceUID })
 
 // 图像去噪
-export const limpidDcmList = (instanceNumber, seriesInsranceUID, type) =>
-    Get('/file/getDenoisingFileBySeriesInstanceUIDAndInstanceNumber', { instanceNumber, seriesInsranceUID, type })
+export const limpidDcmList = (seriesInstanceUID, instanceNumber, type) =>
+    Get('/file/getDenoisingFileBySeriesInstanceUIDAndInstanceNumber', { seriesInstanceUID, instanceNumber, type })
 
 
 

@@ -72,6 +72,7 @@ export function Part2() {
   };
 
   useEffect(() => {
+    // 通过完整路径展示dcm图片
     let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null;
     if (path) {
       let imageIds = path;
@@ -122,14 +123,18 @@ export function Part2() {
     }
     demoData.append("file", files[0]);
     console.log(formdata.getAll("file"));
-    uploadFile(formdata);
+    uploadFile(formdata).then((res) => {
+      console.log(res);
+    });
 
+    // 获取病人信息
     let fileInfo = await getFileInfo(demoData);
     console.log(fileInfo);
-    //此处
     let patientInfo = { ...fileInfo.data };
     console.log(patientInfo);
+
     //添加文件id
+    // 在这里生成获取到的dcm序列所有的完整路径
     let filePaths = [];
     for (let i = 1; i <= files.length; i++) {
       filePaths.push(getImageId(patientInfo.SeriesInstanceUID, i));
@@ -185,8 +190,8 @@ export function Part2() {
     console.log(patientInfo.SeriesInstanceUID);
     console.log(instanceNumber);
     let newLimpidDcmList = await limpidDcmList(
-      instanceNumber,
       patientInfo.SeriesInstanceUID,
+      1,
       1
     );
     console.log(newLimpidDcmList);
