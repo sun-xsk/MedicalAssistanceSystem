@@ -105,12 +105,12 @@ export function Part2() {
     return () => {
       for (let i = 0; i < mouseToolChain.length; i++) {
         if (mouseToolChain[i].name === name) {
-          cornerstoneTools.addTool(mouseToolChain[i].func);
+          cornerstoneTools.addToolForElement(imgRef.current,mouseToolChain[i].func);
           cornerstoneTools.setToolActive(mouseToolChain[i].name, {
             mouseButtonMask: 1,
           });
         } else {
-          cornerstoneTools.addTool(mouseToolChain[i].func);
+          cornerstoneTools.addToolForElement(imgRef.current,mouseToolChain[i].func);
           cornerstoneTools.setToolPassive(mouseToolChain[i].name, {
             mouseButtonMask: 1,
           });
