@@ -5,7 +5,6 @@ import { cornerstone, cornerstoneTools } from "../../../util/js/cornerstone";
 import {
   uploadFile,
   getFileInfo,
-  limpidDcmList,
   getInstanceNumbers,
 } from "../../../util/api/httpUtil";
 
@@ -42,7 +41,6 @@ export function Part2() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const fileRef = useRef(null);
   const imgRef = useRef(null);
-  // const picRef = useRef(null);
   let [viewPort, setViewPort] = useState({});
   const [patientInfo, setPatientInfo] = useState({});
   const [isShow, setIsShow] = useState(false);
@@ -53,8 +51,6 @@ export function Part2() {
 
   useEffect(() => {
     cornerstone.enable(imgRef.current);
-    // cornerstone.enable(picRef.current);
-
     setViewPort((viewPort) => ({
       ...viewPort,
       voi: { windowWidth: "", windowCenter: "" },
@@ -79,10 +75,11 @@ export function Part2() {
       `seriesInstanceUID=${seriesInstanceUID}&instanceNumber=${instanceNumber}&type=${type}`
     );
   };
+
+  // 将具体完整的路径挂载到cornostone组件库上面
   useEffect(() => {
     // 通过完整路径展示dcm图片
     let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null;
-    console.log(path[0]);
     if (path) {
       let imageIds = path;
       let stack = {
@@ -105,12 +102,18 @@ export function Part2() {
     return () => {
       for (let i = 0; i < mouseToolChain.length; i++) {
         if (mouseToolChain[i].name === name) {
-          cornerstoneTools.addToolForElement(imgRef.current,mouseToolChain[i].func);
+          cornerstoneTools.addToolForElement(
+            imgRef.current,
+            mouseToolChain[i].func
+          );
           cornerstoneTools.setToolActive(mouseToolChain[i].name, {
             mouseButtonMask: 1,
           });
         } else {
-          cornerstoneTools.addToolForElement(imgRef.current,mouseToolChain[i].func);
+          cornerstoneTools.addToolForElement(
+            imgRef.current,
+            mouseToolChain[i].func
+          );
           cornerstoneTools.setToolPassive(mouseToolChain[i].name, {
             mouseButtonMask: 1,
           });
@@ -226,10 +229,16 @@ export function Part2() {
           <div className="txt">图像加强</div>
         </button>
 
-        <button className="singleTool" onClick={LimpidPic.bind(this, 2)}>
+        <div className="singleTool">
           <span className="iconfont toolIcons">&#xe7ca;</span>
           <div className="txt">图像去噪</div>
-        </button>
+          <div className="detailLimpid">
+            <button onClick={LimpidPic.bind(this, 1)}>高斯</button>
+            <button onClick={LimpidPic.bind(this, 2)}>中值</button>
+            <button onClick={LimpidPic.bind(this, 3)}>均值</button>
+            {/* <button>不去噪</button> */}
+          </div>
+        </div>
 
         <button className="singleTool" onClick={upsideDownTb}>
           <span className="iconfont toolIcons">&#xe662;</span>

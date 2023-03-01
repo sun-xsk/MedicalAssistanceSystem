@@ -42,7 +42,8 @@
     @include flexBox(flex-start);
     //   设置单个功能样式
     .singleTool {
-      height: 60%;
+      position: relative;
+      height: 90px;
       width: 70px;
       margin-left: 15px;
       color: #00a4d9;
@@ -54,14 +55,46 @@
         margin-top: 5px;
         font-size: 14px;
       }
+
+      .detailLimpid {
+        position: absolute;
+        top: 80px;
+        z-index: 2;
+        width: 160px;
+        background-color: rgb(1, 7, 12);
+        display: none;
+
+        border: #00a4d9 1px solid;
+        border-radius: 3px;
+      }
     }
+
     .singleTool:first-child {
       margin-left: 20px;
     }
     .singleTool:hover {
+      cursor: pointer;
       color: rgba(203, 201, 196, 0.6);
     }
-    .uploadTool{
+
+    // 设置鼠标上移显示三个去噪按钮
+    .singleTool:hover .detailLimpid {
+      display: block;
+      @include flexBox(space-around, center);
+      button {
+        border: none;
+        height: 35px;
+        background-color: rgba(0, 0, 0, 0);
+        cursor: pointer;
+        font-size: 14px;
+        color: #00a4d9;
+      }
+      button:hover {
+        color: rgb(122, 121, 118);
+      }
+    }
+
+    .uploadTool {
       cursor: pointer;
       position: absolute;
       right: 4vw;
@@ -71,10 +104,11 @@
       height: 35px;
       font-size: 18px;
     }
-    .uploadTool:hover{
+
+    .uploadTool:hover {
       background-color: #0aafe6;
     }
-    .saveTool{
+    .saveTool {
       cursor: pointer;
       position: absolute;
       right: 11vw;
@@ -84,7 +118,7 @@
       height: 35px;
       font-size: 18px;
     }
-    .saveTool:hover{
+    .saveTool:hover {
       background-color: #0aafe6;
     }
   }
@@ -151,38 +185,36 @@
       .position,
       .viewPort,
       .PatientInfo,
-      .study{
+      .study {
         position: absolute;
         color: #00a4d9;
       }
-      .position{
+      .position {
         left: 1vw;
         bottom: 1vh;
       }
-      .viewPort{
+      .viewPort {
         width: 130px;
         right: 1vw;
         bottom: 1vh;
       }
-      .PatientInfo{
+      .PatientInfo {
         left: 1vw;
         top: 1vh;
       }
-      .study{
+      .study {
         right: 1vw;
         top: 1vh;
       }
-      .detailPic{
+      .detailPic {
         position: relative;
         height: 80vh;
         width: 80vh;
       }
     }
-    
-    .toolIcons{
+
+    .toolIcons {
       font-size: 30px;
     }
-   
-
   }
 }
