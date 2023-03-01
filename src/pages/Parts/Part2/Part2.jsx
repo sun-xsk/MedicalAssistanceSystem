@@ -71,9 +71,18 @@ export function Part2() {
     );
   };
 
+  // 设置请求去噪过后的dcm文件id
+  const getLimpidImgId = (seriesInstanceUID, instanceNumber, type) => {
+    return (
+      "wadouri:" +
+      "http://43.142.168.114:8001/MedicalSystem/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber?" +
+      `seriesInstanceUID=${seriesInstanceUID}&instanceNumber=${instanceNumber}&type=${type}`
+    );
+  };
   useEffect(() => {
     // 通过完整路径展示dcm图片
     let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null;
+    console.log(path[0]);
     if (path) {
       let imageIds = path;
       let stack = {
@@ -168,7 +177,7 @@ export function Part2() {
       }));
     }
   };
-  //   上下左右翻转图片
+  // 上下左右翻转图片
   function upsideDownTb() {
     upTb = !upTb;
     cornerstone.setViewport(imgRef.current, {
@@ -183,18 +192,20 @@ export function Part2() {
   }
 
   // 图像去噪
-  async function LimpidPic() {
+  async function LimpidPic(type) {
     let instanceNumber = await getInstanceNumbers(
       patientInfo.SeriesInstanceUID
     );
     console.log(patientInfo.SeriesInstanceUID);
     console.log(instanceNumber);
-    let newLimpidDcmList = await limpidDcmList(
-      patientInfo.SeriesInstanceUID,
-      1,
-      1
-    );
-    console.log(newLimpidDcmList);
+    // 在这里生成获取到的dcm序列所有的完整路径
+    let filePaths = [];
+    for (let i = 1; i <= instanceNumber.data.length; i++) {
+      filePaths.push(getLimpidImgId(patientInfo.SeriesInstanceUID, i, type));
+    }
+    sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
+    setIsShow(!isShow);
+    setData(filePaths);
   }
 
   return (
@@ -215,7 +226,7 @@ export function Part2() {
           <div className="txt">图像加强</div>
         </button>
 
-        <button className="singleTool" onClick={LimpidPic}>
+        <button className="singleTool" onClick={LimpidPic.bind(this, 2)}>
           <span className="iconfont toolIcons">&#xe7ca;</span>
           <div className="txt">图像去噪</div>
         </button>
