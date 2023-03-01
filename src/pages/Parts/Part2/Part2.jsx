@@ -2,7 +2,12 @@ import React, { useState, useRef, useEffect } from "react";
 import Item from "./Item/Item";
 import { cornerstone, cornerstoneTools } from "../../../util/js/cornerstone";
 
-import { uploadFile, getFileInfo } from "../../../util/api/httpUtil";
+import {
+  uploadFile,
+  getFileInfo,
+  limpidDcmList,
+  getInstanceNumbers,
+} from "../../../util/api/httpUtil";
 
 import Header from "./Header/Header";
 import "./Part2.scss";
@@ -172,42 +177,19 @@ export function Part2() {
     });
   }
 
-   // 图像去噪
-   function LimpidPic() {
-    // 拿到当前的canvas组件
-    const canvas = document.getElementsByClassName("cornerstone-canvas")[0];
-    const ctx = canvas.getContext("2d");
-
-    // 获取图片像素信息
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    let data = imageData.data;
-
-    // 获取一行的间隔为space，让一个像素点的数据间隔为4（是rgba颜色值）
-    const space = imageData.width * 4;
-    // console.log(space, "...", data.length);
-    // const singleSpace = 4;
-    for (let i = space; i < data.length - space; i += 4) {
-      // 直接跳过边界
-      if (i % space === 0 || (i + 4) % space === 0) {
-        continue;
-      } else {
-        const singleData =
-          data[i - space] +
-          data[i - space + 4] +
-          data[i - space - 4] +
-          data[i] +
-          data[i + 4] +
-          data[i - 4] +
-          data[i + space] +
-          data[i + space + 4] +
-          data[i + space - 4];
-        const avg = singleData / 9;
-        data[i] = avg;
-        data[i + 1] = avg;
-        data[i + 2] = avg;
-      }
-    }
-    ctx.putImageData(imageData, 0, 0);
+  // 图像去噪
+  async function LimpidPic() {
+    let instanceNumber = await getInstanceNumbers(
+      patientInfo.SeriesInstanceUID
+    );
+    console.log(patientInfo.SeriesInstanceUID);
+    console.log(instanceNumber);
+    let newLimpidDcmList = await limpidDcmList(
+      instanceNumber,
+      patientInfo.SeriesInstanceUID,
+      1
+    );
+    console.log(newLimpidDcmList);
   }
 
   return (
@@ -273,7 +255,7 @@ export function Part2() {
             {/* <div className="pic" ref={picRef}></div>; */}
           </div>
         </div>
- {/* // */}
+
         <div
           className="detailPicBox"
           onMouseMove={(e) => handleMouseMove(e)}
