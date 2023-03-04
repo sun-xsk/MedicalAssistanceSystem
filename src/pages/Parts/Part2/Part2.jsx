@@ -228,19 +228,19 @@ export function Part2() {
     const init = (wrap) => {
       if (!wrap) return
       clipAreaWrap.current = wrap
+      console.log(wrap, clipAreaWrap);
       clipCanvas.current = document.createElement('canvas')
       //drawCanvas.current = document.createElement('canvas')
       clipCanvas.current.style =
         'width:100%;height:100%;z-index: 2;position: absolute;left: 0;top: 0;'
       //drawCanvas.current.style =
       //'width:100%;height:100%;z-index: 1;position: absolute;left: 0;top: 0;'
-
-      clipAreaWrap.current?.appendChild(clipCanvas.current)
-      clipAreaWrap.current?.appendChild(drawCanvas.current)
+      clipAreaWrap.current.appendChild(clipCanvas.current)
+      clipAreaWrap.current.appendChild(drawCanvas)
     }
     // 截图
     const cut = (souceImg) => {
-      const drawCanvasCtx = drawCanvas.current.getContext('2d')
+      const drawCanvasCtx = drawCanvas.getContext('2d')
       const clipCanvasCtx = clipCanvas.current.getContext('2d')
 
       const wrapWidth = clipAreaWrap.current.clientWidth
@@ -354,7 +354,8 @@ export function Part2() {
     const getClipPicUrl = (area, drawCanvasCtx) => {
       const canvas = document.createElement('canvas')
       const context = canvas.getContext('2d')
-      const data = drawCanvasCtx.getImageData(area.x, area.y, area.w, area.h)
+      const data = drawCanvasCtx.getImageData(0, 0, drawCanvasCtx.canvas.clientWidth, drawCanvasCtx.canvas.clientHeight);
+     // const data = drawCanvasCtx.getImageData(area.x, area.y, area.w, area.h)
       canvas.width = area.w
       canvas.height = area.h
       context.putImageData(data, 0, 0)
