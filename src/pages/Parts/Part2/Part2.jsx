@@ -106,7 +106,9 @@ export function Part2() {
             imgRef.current,
             mouseToolChain[i].func
           );
-          cornerstoneTools.setToolActive(mouseToolChain[i].name, {
+          cornerstoneTools.setToolActiveForElement(
+            imgRef.current,
+            mouseToolChain[i].name, {
             mouseButtonMask: 1,
           });
         } else {
@@ -114,7 +116,9 @@ export function Part2() {
             imgRef.current,
             mouseToolChain[i].func
           );
-          cornerstoneTools.setToolPassive(mouseToolChain[i].name, {
+          cornerstoneTools.setToolPassiveForElement(
+            imgRef.current,
+            mouseToolChain[i].name, {
             mouseButtonMask: 1,
           });
         }

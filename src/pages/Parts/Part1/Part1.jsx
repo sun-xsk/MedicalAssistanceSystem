@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import useSyncCallback from "../../../util/js/useSyncCallback"
 import Item from "./Item/Item"
 import {
   cornerstone,
@@ -55,16 +56,17 @@ export function Part1() {
   const imgRef = useRef(null);
   // const picRef = useRef(null);
   let [viewPort, setViewPort] = useState({});
-  const [patientInfo,setPatientInfo] = useState({})
+  const [patientInfo, setPatientInfo] = useState({})
   const [isShow, setIsShow] = useState(false);
-  let [data,setData] = useState([])
+  let [data, setData] = useState([])
+  let [obj, setObj] = useState({})
 
   useEffect(() => {
     cornerstone.enable(imgRef.current);
     // cornerstone.enable(picRef.current); 
 
 
-    setViewPort( viewPort =>({
+    setViewPort(viewPort => ({
       ...viewPort,
       voi: { windowWidth: "", windowCenter: "" },
       scale: 0,
@@ -72,15 +74,15 @@ export function Part1() {
   }, []);
 
 
-  let getImageId = (seriesInstanceUID,instanceNumber) =>{
-    return 'wadouri:'+'http://43.142.168.114:8001/MedicalSystem/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber?'+
-            `seriesInstanceUID=${seriesInstanceUID}&instanceNumber=${instanceNumber}`
+  let getImageId = (seriesInstanceUID, instanceNumber) => {
+    return 'wadouri:' + 'http://43.142.168.114:8001/MedicalSystem/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber?' +
+      `seriesInstanceUID=${seriesInstanceUID}&instanceNumber=${instanceNumber}`
   }
 
-  useEffect(()=>{
-      let path=JSON.parse(sessionStorage.getItem("FILE_PATH")) || null
-      if(path){
-      let imageIds=path
+  useEffect(() => {
+    let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null
+    if (path) {
+      let imageIds = path
       let stack = {
         currentImageIdIndex: 0,
         imageIds,
@@ -94,19 +96,30 @@ export function Part1() {
       setIsShow(true)
       setData(JSON.parse(sessionStorage.getItem("FILE_PATH")))
     }
-  },[isShow])
+  }, [isShow])
 
   function chooseTool(name) {
     return () => {
       for (let i = 0; i < mouseToolChain.length; i++) {
         if (mouseToolChain[i].name === name) {
-          cornerstoneTools.addToolForElement(imgRef.current,mouseToolChain[i].func);
-          cornerstoneTools.setToolActive(mouseToolChain[i].name, {
+
+          cornerstoneTools.addToolForElement(
+            imgRef.current,
+            mouseToolChain[i].func
+          );
+          cornerstoneTools.setToolActiveForElement(
+            imgRef.current,
+            mouseToolChain[i].name, {
             mouseButtonMask: 1,
           });
         } else {
-          cornerstoneTools.addToolForElement(imgRef.current,mouseToolChain[i].func);
-          cornerstoneTools.setToolPassive(mouseToolChain[i].name, {
+          cornerstoneTools.addToolForElement(
+            imgRef.current,
+            mouseToolChain[i].func
+          );
+          cornerstoneTools.setToolPassiveForElement(
+            imgRef.current,
+            mouseToolChain[i].name, {
             mouseButtonMask: 1,
           });
         }
@@ -132,38 +145,81 @@ export function Part1() {
     let fileInfo = await getFileInfo(demoData);
     console.log(fileInfo);
     //此处
-    let patientInfo={...fileInfo.data}
+    let patientInfo = { ...fileInfo.data }
     console.log(patientInfo)
     //添加文件id
-    let filePaths=[]
-    for(let i=1;i<=files.length;i++){
-      filePaths.push(getImageId(patientInfo.SeriesInstanceUID,i))
+    let filePaths = []
+    for (let i = 1; i <= files.length; i++) {
+      filePaths.push(getImageId(patientInfo.SeriesInstanceUID, i))
     }
-    sessionStorage.setItem("FILE_PATH",JSON.stringify(filePaths))
-    sessionStorage.setItem("PATIENT_INFO",JSON.stringify(patientInfo))
+    sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths))
+    sessionStorage.setItem("PATIENT_INFO", JSON.stringify(patientInfo))
     setIsShow(true)
     setData(filePaths)
   }
- 
+
+
   const handleMouseMove = (e) => {
     setPosition({
       x: e.nativeEvent.offsetX,
       y: e.nativeEvent.offsetX,
     });
     if (imgRef.current && isShow) {
-      setViewPort(viewPort =>({...viewPort,...cornerstone.getViewport(imgRef.current)}) );
+      setViewPort(viewPort => ({ ...viewPort, ...cornerstone.getViewport(imgRef.current) }));
     }
   };
   const handleWheel = () => {
     if (imgRef.current && isShow) {
-      setViewPort(viewPort =>({...viewPort,...cornerstone.getViewport(imgRef.current)}));
+      setViewPort(viewPort => ({ ...viewPort, ...cornerstone.getViewport(imgRef.current) }));
     }
   };
+
+  //负责导出文件
+  const handleExport = () => {
+    setObj({
+      title: ['Accession Number', 'Modality', 'Patient Address', 'Patient Age',
+        'Patient ID', 'Patient Name', 'Series Instance UID', "Study Date"],
+      data: [
+        patientInfo
+      ],
+    })
+    btnClickExport()
+  }
+  //导出文件具体方法
+  const btnClickExport = () => {
+    if (Object.getOwnPropertyNames(obj).length == 0) {
+      return;
+    }
+    const title = obj.title;
+    const dataKey = Object.keys(obj.data[0]);
+    const data = obj.data;
+    let str = [];
+    str.push(title.join(',') + '\r\n');
+    for (let i = 0; i < data.length; i++) {
+      let temp = [];
+      for (let j = 0; j < dataKey.length; j++) {
+        temp.push(data[i][dataKey[j]]);
+      }
+      str.push(temp.join(',') + '\r\n');
+    }
+    const blob = new Blob(['\uFEFF' + str.join('')], {
+      type: 'test/csv;charset=utf-8',
+    });
+    //导出
+    const url = window.URL.createObjectURL(blob);
+    const downloadLink = document.createElement('a');
+    downloadLink.href = url;
+    //导出文件的文件名
+    downloadLink.download = patientInfo.PatientID+'.csv';
+    downloadLink.click();
+    window.URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="Part1">
       <Header />
       <div className="toolBar">
-      <button className="singleTool" onClick={chooseTool("StackScrollMouseWheel")}>
+        <button className="singleTool" onClick={chooseTool("StackScrollMouseWheel")}>
           <span className="iconfont toolIcons">&#xe6f6;</span>
           <div className="txt">滚动切片</div>
         </button>
@@ -236,7 +292,7 @@ export function Part1() {
             ref={fileRef}
           />
         </button>
-        <button className="saveTool">
+        <button className="saveTool" onClick={() => handleExport()}>
           <div className="txt">保存</div>
         </button>
       </div>
@@ -244,11 +300,11 @@ export function Part1() {
       <div className="p-detail">
         <div className="p-picList">
           <div className="showPic">
-            {data.map((item,index) => {
+            {data.map((item, index) => {
               return <Item key={index} data={item}></Item>
             })}
             {/* <div className="pic" ref={picRef}></div>; */}
-            
+
           </div>
         </div>
 
@@ -285,17 +341,17 @@ export function Part1() {
             <div className="PatientInfo">
               <p>Patient Name : {patientInfo.PatientName ? patientInfo.PatientName : "undefined"}</p>
               <p>Patient ID : {patientInfo.PatientID ? patientInfo.PatientID : "undefined"}</p>
-              <p>Patinet Age : {patientInfo.PatientAge ?  patientInfo.PatientAge : "undefined" }</p>
-              <p>Patinet Address : {patientInfo.PatientAddress ?  patientInfo.PatientAddress : "undefined" }</p>
+              <p>Patinet Age : {patientInfo.PatientAge ? patientInfo.PatientAge : "undefined"}</p>
+              <p>Patinet Address : {patientInfo.PatientAddress ? patientInfo.PatientAddress : "undefined"}</p>
             </div>
           ) : null}
           {isShow ? (
             <div className="study">
-                <p>Modality : {patientInfo.Modality ? patientInfo.Modality : 'undefined'}</p>
-                <p>Study Date : {patientInfo.StudyDate ? patientInfo.StudyDate : "undefined"}</p>
-                <p>Accession Number : {patientInfo.AccessionNumber ? patientInfo.AccessionNumber : 'undefined'}</p>
+              <p>Modality : {patientInfo.Modality ? patientInfo.Modality : 'undefined'}</p>
+              <p>Study Date : {patientInfo.StudyDate ? patientInfo.StudyDate : "undefined"}</p>
+              <p>Accession Number : {patientInfo.AccessionNumber ? patientInfo.AccessionNumber : 'undefined'}</p>
             </div>
-          ) :null
+          ) : null
           }
         </div>
       </div>
