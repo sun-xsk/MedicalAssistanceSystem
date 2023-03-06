@@ -12,7 +12,7 @@ export default function Header() {
         <Link to="/home" className="back-home">
           <Image height={17} src={svg} preview={false} />
           <div className="txt">
-            This is a line of statements used for placeholder
+          医学影像训练样本标注工具软件
           </div>
         </Link>
       </div>

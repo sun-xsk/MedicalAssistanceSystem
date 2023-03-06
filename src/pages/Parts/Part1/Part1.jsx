@@ -354,6 +354,17 @@ export function Part1() {
           ) : null
           }
         </div>
+
+        <div className="picTag">
+          <div>
+            <div className="tagTitles">
+              <div >序号</div>
+              <div >影像编号</div>
+              <div >面积(mm2)</div>
+              <div>平均CT值</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -22,8 +22,7 @@ export default function Home() {
             <div className="top">Part1</div>
             <div className="content">
               <div className="Span">
-                This is a sentance for explain.This is a sentance for
-                explain.This is a sentance for explain.
+                医学影像训练样本标注工具软件
               </div>
             </div>
             <Link to="/Part1" className="link">
@@ -34,8 +33,7 @@ export default function Home() {
             <div className="top">Part2</div>
             <div className="content">
               <div className="Span">
-                This is a sentance for explain.This is a sentance for
-                explain.This is a sentance for explain.
+                医学影像预处理工具软件
               </div>
             </div>
             <Link to="/Part2" className="link">

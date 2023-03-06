@@ -137,7 +137,7 @@
     }
     // 展示大图
     .detailPicBox {
-      width: 82%;
+      width: 55%;
       height: 99.4%;
       background-color: rgb(0, 0, 0);
       border: #087aa0 1px solid;
@@ -179,6 +179,20 @@
       }
     }
     
+    .picTag{
+      width: 27%;
+      align-self: flex-start;
+      align-items: end;
+      color:#00a4d9;
+      .tagTitles{
+        display: flex;
+        justify-content: space-evenly;
+        height: 50px;
+        align-items: center;
+        background-color: #1e2a3d;
+      }
+    }
+
     .toolIcons{
       font-size: 30px;
     }
