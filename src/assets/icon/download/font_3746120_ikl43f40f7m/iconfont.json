@@ -1,0 +1,114 @@
+{
+  "id": "3746120",
+  "name": "medical",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "2076243",
+      "name": " 增加",
+      "font_class": "zengjia",
+      "unicode": "e889",
+      "unicode_decimal": 59529
+    },
+    {
+      "icon_id": "5831313",
+      "name": "减",
+      "font_class": "jian",
+      "unicode": "e64e",
+      "unicode_decimal": 58958
+    },
+    {
+      "icon_id": "1305407",
+      "name": "下",
+      "font_class": "xia",
+      "unicode": "e63c",
+      "unicode_decimal": 58940
+    },
+    {
+      "icon_id": "11529543",
+      "name": "可视化平台icon_滑动条",
+      "font_class": "keshihuapingtaiicon_huadongtiao",
+      "unicode": "e6f6",
+      "unicode_decimal": 59126
+    },
+    {
+      "icon_id": "712425",
+      "name": "笔",
+      "font_class": "icon-pencil",
+      "unicode": "e670",
+      "unicode_decimal": 58992
+    },
+    {
+      "icon_id": "4188704",
+      "name": "多边形选择",
+      "font_class": "duobianxingxuanze",
+      "unicode": "e6ec",
+      "unicode_decimal": 59116
+    },
+    {
+      "icon_id": "5173361",
+      "name": "橡皮擦",
+      "font_class": "xiangpica",
+      "unicode": "e606",
+      "unicode_decimal": 58886
+    },
+    {
+      "icon_id": "5203299",
+      "name": "太阳",
+      "font_class": "taiyang",
+      "unicode": "e635",
+      "unicode_decimal": 58933
+    },
+    {
+      "icon_id": "7597964",
+      "name": "24gl-move",
+      "font_class": "24gl-move",
+      "unicode": "eb70",
+      "unicode_decimal": 60272
+    },
+    {
+      "icon_id": "8551145",
+      "name": "10矩形",
+      "font_class": "juxing",
+      "unicode": "e604",
+      "unicode_decimal": 58884
+    },
+    {
+      "icon_id": "10989589",
+      "name": "Icon_角度测量",
+      "font_class": "Icon_jiaoduceliang",
+      "unicode": "e631",
+      "unicode_decimal": 58929
+    },
+    {
+      "icon_id": "12660046",
+      "name": "放大镜",
+      "font_class": "fangdajing",
+      "unicode": "e662",
+      "unicode_decimal": 58978
+    },
+    {
+      "icon_id": "14197973",
+      "name": "圆形围栏",
+      "font_class": "icon_device_yuanxingweilan",
+      "unicode": "e61b",
+      "unicode_decimal": 58907
+    },
+    {
+      "icon_id": "22383152",
+      "name": "固定长度绘制线",
+      "font_class": "gudingchangduhuizhixian",
+      "unicode": "edda",
+      "unicode_decimal": 60890
+    },
+    {
+      "icon_id": "25537492",
+      "name": "放大",
+      "font_class": "fangda",
+      "unicode": "e7ca",
+      "unicode_decimal": 59338
+    }
+  ]
+}

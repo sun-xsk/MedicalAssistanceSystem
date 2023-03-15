@@ -1,0 +1,140 @@
+.detail-bar {
+    border-top: 1px solid #00a4d9;
+    box-sizing: border-box;
+    padding: 10px;
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+
+    .tag0d {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+        transform:rotate(-90deg);
+
+        .downIcon {
+            font-size: 10px;
+            cursor: pointer;
+        }
+    }
+
+    .tag0 {
+        display: inline-block;
+        width: 18px;
+        height: 18px;
+
+        .downIcon {
+            font-size: 10px;
+            cursor: pointer;
+        }
+    }
+
+    .tag1 {
+        width: 30px;
+    }
+
+    .tag2 {
+        width: 60px;
+    }
+
+    .tag3 {
+        width: 80px;
+    }
+
+    .tag4 {
+        width: 70px;
+    }
+}
+
+.detail-inner {
+    border-top: 1px solid #00a3d95c;
+    border-bottom: 1px solid #00a3d95c;
+    padding: 20px 40px;
+    box-sizing: border-box;
+    color: rgb(173, 173, 171);
+
+    div {
+        padding: 10px 0;
+    }
+
+    .inner1 {
+
+
+        .detail-inner-inputId {
+            background-color: antiquewhite;
+            height: 10px;
+            width: 70px;
+            font-size: 16px;
+            line-height: 12px;
+            display: inline-block;
+            text-align: center;
+            color: black;
+        }
+
+        .in {
+            margin-left: 20px;
+            text-align: center;
+            font-size: 16px;
+            line-height: 12px;
+            height: 10px;
+            width: 27px;
+            display: inline-block;
+            color: rgb(159, 158, 156);
+            background-color: rgb(228, 225, 222);
+            border-radius: 5px 0 0 5px;
+            cursor: pointer;
+
+            .inIcon {
+                font-size: 15px;
+            }
+        }
+
+        .in:hover {
+            color: #00a4d9;
+        }
+
+        .de {
+            text-align: center;
+            font-size: 16px;
+            line-height: 12px;
+            height: 10px;
+            width: 27px;
+            display: inline-block;
+            border-radius: 0 5px 5px 0;
+            color: rgb(159, 158, 156);
+            background-color: rgb(228, 225, 222);
+            cursor: pointer;
+
+            .deIcon {
+                font-size: 15px;
+            }
+        }
+
+        .de:hover {
+            color: #00a4d9;
+        }
+    }
+
+    .choose {
+        margin-left: 15px;
+        cursor: pointer;
+        font-size: 13px;
+    }
+
+    .downIcon {
+        margin-left: 4px;
+        font-size: 16px;
+    }
+
+    .choose:hover {
+        color: #00a4d9;
+    }
+
+    .inner3 {
+        .ex {
+            margin-left: 20px;
+        }
+    }
+
+
+}

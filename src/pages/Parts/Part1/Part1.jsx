@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import useSyncCallback from "../../../util/js/useSyncCallback"
 import Item from "./Item/Item"
+import Detail from './Detail/Detail'
 import {
   cornerstone,
   // dicomParser,
   // cornerstoneWADOImageLoader,
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
- 
+
 
 import {
   testConnect,
@@ -50,6 +51,9 @@ const mouseToolChain = [
   },
   { name: "Brush", func: cornerstoneTools.BrushTool },
 ];
+
+let activeToolName = ""; // 激活工具名称
+let prevToolName = ""; // 上一个激活工具名称
 
 export function Part1() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -103,7 +107,6 @@ export function Part1() {
     return () => {
       for (let i = 0; i < mouseToolChain.length; i++) {
         if (mouseToolChain[i].name === name) {
-
           cornerstoneTools.addToolForElement(
             imgRef.current,
             mouseToolChain[i].func
@@ -211,7 +214,7 @@ export function Part1() {
     const downloadLink = document.createElement('a');
     downloadLink.href = url;
     //导出文件的文件名
-    downloadLink.download = patientInfo.PatientID+'.csv';
+    downloadLink.download = patientInfo.PatientID + '.csv';
     downloadLink.click();
     window.URL.revokeObjectURL(url);
   }
@@ -296,14 +299,14 @@ export function Part1() {
         <button className="saveTool" onClick={() => handleExport()}>
           <div className="txt">保存</div>
         </button>
-      </div>
+      </div>  
 
       <div className="p-detail">
         <div className="p-picList">
           <div className="showPic">
-            {data.map((item, index) => {
+            {/* {data.map((item, index) => {
               return <Item key={index} data={item}></Item>
-            })}
+            })} */}
             {/* <div className="pic" ref={picRef}></div>; */}
 
           </div>
@@ -359,10 +362,14 @@ export function Part1() {
         <div className="picTag">
           <div>
             <div className="tagTitles">
-              <div >序号</div>
-              <div >影像编号</div>
-              <div >面积(mm2)</div>
-              <div>平均CT值</div>
+              <div className="tag0"></div>
+              <div className="tag1">序号</div>
+              <div className="tag2">影像编号</div>
+              <div className="tag3">面积(mm2)</div>
+              <div className="tag4">平均CT值</div>
+            </div>
+            <div className="tagDetails">
+              <Detail />
             </div>
           </div>
         </div>
