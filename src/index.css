@@ -20,3 +20,11 @@
   margin: 0;
   padding: 0;
 }
+
+#root::-webkit-scrollbar {
+  display: none;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}

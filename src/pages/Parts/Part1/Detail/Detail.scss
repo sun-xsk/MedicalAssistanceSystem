@@ -1,5 +1,6 @@
 .detail-bar {
     border-top: 1px solid #00a4d9;
+    border-bottom: 1px solid #00a4d9;
     box-sizing: border-box;
     padding: 10px;
     display: flex;
@@ -52,6 +53,7 @@
     padding: 20px 40px;
     box-sizing: border-box;
     color: rgb(173, 173, 171);
+    display: none;
 
     div {
         padding: 10px 0;

@@ -204,8 +204,14 @@
       }
     }
 
+    .picTag::-webkit-scrollbar {
+      display: none;
+    }
+
     .picTag {
       width: 27%;
+      height: 100%;
+      overflow: auto;
       align-self: flex-start;
       align-items: end;
       color: #00a4d9;
@@ -218,6 +224,7 @@
         background-color: #1e2a3d;
         font-size: 14px;
         padding-left: 10px;
+
         .tag0 {
           width: 18px;
         }

@@ -52,8 +52,28 @@ const mouseToolChain = [
   { name: "Brush", func: cornerstoneTools.BrushTool },
 ];
 
+const toolState = {};
+
 let activeToolName = ""; // 激活工具名称
 let prevToolName = ""; // 上一个激活工具名称
+
+function marker() {
+  return {
+    configuration: {
+      markers: ["F5", "F4", "F3", "F2", "F1"], //标记数组
+      current: 'F3', //要对应markers
+      loop: true, //是否循环
+      ascending: false, //true 降序 false 升序
+      changeTextCallback: function (data, eventData, doneChangingTextCallback) {
+        data.visible = true; //是否可见, 默认true
+        data.color = "#38f"; //文字颜色
+        data.text = "内容"; //修改内容  这里修改了也没有，因为默认使用第二个参数
+        doneChangingTextCallback(data, prompt('改变标注:'));
+      }
+    }
+  }
+}
+
 
 export function Part1() {
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -63,12 +83,21 @@ export function Part1() {
   let [viewPort, setViewPort] = useState({});
   const [patientInfo, setPatientInfo] = useState({})
   const [isShow, setIsShow] = useState(false);
+  const [details,setDetails] = useState([])
   let [data, setData] = useState([])
   let [obj, setObj] = useState({})
 
   useEffect(() => {
     cornerstone.enable(imgRef.current);
     // cornerstone.enable(picRef.current); 
+
+
+    imgRef.current.addEventListener(cornerstoneTools.EVENTS.MOUSE_UP, e => {
+      const detail = e.detail;
+      const imageId = detail.image.imageId; // 获取imageId
+      setDetails([...details,detail])
+      console.log(details);
+    })
 
 
     setViewPort(viewPort => ({
@@ -105,29 +134,52 @@ export function Part1() {
 
   function chooseTool(name) {
     return () => {
-      for (let i = 0; i < mouseToolChain.length; i++) {
-        if (mouseToolChain[i].name === name) {
-          cornerstoneTools.addToolForElement(
-            imgRef.current,
-            mouseToolChain[i].func
-          );
-          cornerstoneTools.setToolActiveForElement(
-            imgRef.current,
-            mouseToolChain[i].name, {
-            mouseButtonMask: 1,
-          });
-        } else {
-          cornerstoneTools.addToolForElement(
-            imgRef.current,
-            mouseToolChain[i].func
-          );
-          cornerstoneTools.setToolPassiveForElement(
-            imgRef.current,
-            mouseToolChain[i].name, {
-            mouseButtonMask: 1,
-          });
-        }
+      //修改前
+      // for (let i = 0; i < mouseToolChain.length; i++) {
+      //   if (mouseToolChain[i].name === name) {
+      //     cornerstoneTools.addToolForElement(
+      //       imgRef.current,
+      //       mouseToolChain[i].func
+      //     );
+      //     cornerstoneTools.setToolActiveForElement(
+      //       imgRef.current,
+      //       mouseToolChain[i].name, {
+      //       mouseButtonMask: 1,
+      //     });
+      //   } else {
+      //     cornerstoneTools.addToolForElement(
+      //       imgRef.current,
+      //       mouseToolChain[i].func
+      //     );
+      //     cornerstoneTools.setToolPassiveForElement(
+      //       imgRef.current,
+      //       mouseToolChain[i].name, {
+      //       mouseButtonMask: 1,
+      //     });
+      //   }
+      // }
+
+      //新
+      const tool = name
+      if (!tool) return;
+      if (prevToolName) {
+        cornerstoneTools.setToolPassiveForElement(imgRef.current, prevToolName, {
+          mouseButtonMask: 1,
+        }); // 把上一个激活工具冻结
       }
+      activeToolName = tool + "Tool";
+      if (!toolState[activeToolName]) {
+        // 不能重复 addTool
+        cornerstoneTools.addToolForElement(imgRef.current, cornerstoneTools[activeToolName], tool === "TextMarker" ? marker() : {});
+        toolState[activeToolName] = true;
+      }
+      prevToolName = tool;
+      // 激活工具
+      cornerstoneTools.setToolActiveForElement(imgRef.current,
+        tool,
+        {
+          mouseButtonMask: 1
+        });
     };
   }
 
@@ -143,14 +195,14 @@ export function Part1() {
       formdata.append("file", files[i]);
     }
     demoData.append("file", files[0]);
-    console.log(formdata.getAll("file"));
+    // console.log(formdata.getAll("file"));
     uploadFile(formdata);
 
     let fileInfo = await getFileInfo(demoData);
-    console.log(fileInfo);
+    // console.log(fileInfo);
     //此处
     let patientInfo = { ...fileInfo.data }
-    console.log(patientInfo)
+    // console.log(patientInfo)
     //添加文件id
     let filePaths = []
     for (let i = 1; i <= files.length; i++) {
@@ -263,20 +315,20 @@ export function Part1() {
           <div className="txt">橡皮擦</div>
         </button>
 
-        <button className="singleTool" onClick={chooseTool("CircleScissors")}>
+        <button className="singleTool" onClick={chooseTool("CircleRoi")}>
           <span className="iconfont toolIcons">&#xe61b;</span>
           <div className="txt">圆形标注</div>
         </button>
 
         <button
           className="singleTool"
-          onClick={chooseTool("RectangleScissors")}
+          onClick={chooseTool("RectangleRoi")}
         >
           <span className="iconfont toolIcons">&#xe604;</span>
           <div className="txt">矩形标注</div>
         </button>
 
-        <button className="singleTool" onClick={chooseTool("FreehandScissors")}>
+        <button className="singleTool" onClick={chooseTool("FreehandRoi")}>
           <span className="iconfont toolIcons">&#xe6ec;</span>
           <div className="txt">自由标注</div>
         </button>
@@ -299,7 +351,7 @@ export function Part1() {
         <button className="saveTool" onClick={() => handleExport()}>
           <div className="txt">保存</div>
         </button>
-      </div>  
+      </div>
 
       <div className="p-detail">
         <div className="p-picList">
@@ -369,6 +421,9 @@ export function Part1() {
               <div className="tag4">平均CT值</div>
             </div>
             <div className="tagDetails">
+              <Detail />
+              <Detail />
+              <Detail />
               <Detail />
             </div>
           </div>
