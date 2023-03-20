@@ -2,7 +2,8 @@ import axios from "axios";
 import { message } from "antd";
 
 const instance = axios.create({
-  baseURL: "192.168.112.100:50000/MedicalSystem",
+  // baseURL: "68.112.100:50000/MedicalSystem",
+  baseURL: "http://43.142.168.114:8001/MedicalSystem",
   withCredentials: true,
   timeout: 100000,
 });
@@ -67,11 +68,15 @@ instance.interceptors.response.use(
   }
 );
 
-export const Get = (url) => {
+export const Get = (url, params) => {
   return new Promise((resolve, reject) => {
-    instance.get(url).then((result) => {
-        resolve(result);
-      })
+    instance({
+      method: 'get',
+      url,
+      params
+    }).then((result) => {
+      resolve(result);
+    })
       .catch((err) => {
         reject(err);
       });
@@ -79,20 +84,20 @@ export const Get = (url) => {
 };
 
 export const Post = (url, data, params, headers) => {
-    return new Promise((resolve,reject)=>{
-        instance({
-            method:'post',
-            url,
-            data,
-            params,
-            headers
-        }).then(
-            (data)=>{
-                resolve(data)
-            }),
-            (err)=>{
-                reject(err)
-            }
-    })
+  return new Promise((resolve, reject) => {
+    instance({
+      method: 'post',
+      url,
+      data,
+      params,
+      headers
+    }).then(
+      (data) => {
+        resolve(data)
+      }),
+      (err) => {
+        reject(err)
+      }
+  })
 };
 
