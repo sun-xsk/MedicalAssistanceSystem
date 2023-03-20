@@ -35,11 +35,11 @@
     }
 
     .tag2 {
-        width: 60px;
+        width: 100px;
     }
 
     .tag3 {
-        width: 80px;
+        width: 110px;
     }
 
     .tag4 {
@@ -72,6 +72,23 @@
             text-align: center;
             color: black;
         }
+
+        .detail-inner-tagName {
+            background-color: antiquewhite;
+            height: 30px;
+            width: 150px;
+            font-size: 16px;
+            line-height: 12px;
+            display: inline-block;
+            text-align: center;
+            color: black;
+            margin-left: 10px;
+            outline: none;
+            border: 0;
+            border-radius: 30px;
+        }
+
+   
 
         .in {
             margin-left: 20px;
@@ -115,6 +132,27 @@
         .de:hover {
             color: #00a4d9;
         }
+    }
+
+    .deleteBox{
+        display: flex;
+        align-items: center;
+        justify-content: space-around;
+        width: 100%;
+    }
+
+    .detail-delete{
+        width: 80px;
+        height: 30px;
+        border-radius: 15px;
+        background-color: #00a4d9;
+        color: white;
+        border: 0;
+        cursor: pointer;
+    }
+
+    .detail-delete:hover{
+        background-color: #0aafe6;
     }
 
     .choose {

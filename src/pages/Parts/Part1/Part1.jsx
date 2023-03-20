@@ -1,14 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import useSyncCallback from "../../../util/js/useSyncCallback"
-import Item from "./Item/Item"
-import Detail from './Detail/Detail'
+
 import {
   cornerstone,
   // dicomParser,
   // cornerstoneWADOImageLoader,
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
-
 
 import {
   testConnect,
@@ -18,7 +16,11 @@ import {
   getFileInfo,
 } from "../../../util/api/httpUtil";
 
+import myStore from '../../../util/store/store'
+import { addLabeltoState, setLabelName, deleteLabeltoState } from "../../../util/store/store";
 import Header from "../Header/Header";
+import Item from "./Item/Item"
+import Detail from './Detail/Detail'
 import "./Part1.scss";
 
 const mouseToolChain = [
@@ -56,6 +58,7 @@ const toolState = {};
 
 let activeToolName = ""; // 激活工具名称
 let prevToolName = ""; // 上一个激活工具名称
+let uuids = []
 
 function marker() {
   return {
@@ -83,20 +86,59 @@ export function Part1() {
   let [viewPort, setViewPort] = useState({});
   const [patientInfo, setPatientInfo] = useState({})
   const [isShow, setIsShow] = useState(false);
-  const [details,setDetails] = useState([])
+  const [details, setDetails] = useState([]);
   let [data, setData] = useState([])
   let [obj, setObj] = useState({})
 
+
   useEffect(() => {
     cornerstone.enable(imgRef.current);
-    // cornerstone.enable(picRef.current); 
+
+    setDetails(myStore.getState().labelDetails);
+
+    myStore.subscribe(() => {
+      let newLableDetails = myStore.getState().labelDetails;
+      setDetails([...newLableDetails])
+    })
 
 
-    imgRef.current.addEventListener(cornerstoneTools.EVENTS.MOUSE_UP, e => {
-      const detail = e.detail;
-      const imageId = detail.image.imageId; // 获取imageId
-      setDetails([...details,detail])
-      console.log(details);
+    //添加绘图事件
+    imgRef.current.addEventListener(cornerstoneTools.EVENTS.MEASUREMENT_COMPLETED, e => {
+      let detail = e.detail.measurementData;
+      detail.tagName = " "
+      detail.toolName = e.detail.toolName
+
+      let ifhad = false
+
+      uuids.forEach((item) => {
+        if (item == detail.uuid) {
+          ifhad = true
+        }
+      })
+
+      if (!ifhad) {
+        uuids.push(detail.uuid)
+        setTimeout(() => {
+          let detailString = JSON.stringify(detail)
+          myStore.dispatch(addLabeltoState(detailString))
+        }, 100)
+      }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     })
 
 
@@ -106,6 +148,10 @@ export function Part1() {
       scale: 0,
     }))
   }, []);
+
+  // useEffect(() => {
+  //   console.log(details);
+  // }, [details])
 
 
   let getImageId = (seriesInstanceUID, instanceNumber) => {
@@ -416,15 +462,16 @@ export function Part1() {
             <div className="tagTitles">
               <div className="tag0"></div>
               <div className="tag1">序号</div>
-              <div className="tag2">影像编号</div>
-              <div className="tag3">面积(mm2)</div>
-              <div className="tag4">平均CT值</div>
+              <div className="tag2">工具类型</div>
+              <div className="tag3">测量值</div>
+              {/* <div className="tag4">平均CT值</div> */}
             </div>
             <div className="tagDetails">
-              <Detail />
-              <Detail />
-              <Detail />
-              <Detail />
+              {
+                details.map((detail, index) => {
+                  return <Detail detail={detail} index={index} key={detail.uuid} />
+                })
+              }
             </div>
           </div>
         </div>
