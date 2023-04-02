@@ -124,21 +124,6 @@ export function Part1() {
         }, 100)
       }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     })
 
 
@@ -278,32 +263,41 @@ export function Part1() {
 
   //负责导出文件
   const handleExport = () => {
-    setObj({
-      title: ['Accession Number', 'Modality', 'Patient Address', 'Patient Age',
-        'Patient ID', 'Patient Name', 'Series Instance UID', "Study Date"],
-      data: [
-        patientInfo
-      ],
-    })
-    btnClickExport()
-  }
-  //导出文件具体方法
-  const btnClickExport = () => {
-    if (Object.getOwnPropertyNames(obj).length == 0) {
+    if (Object.getOwnPropertyNames(details).length == 0) {
       return;
     }
-    const title = obj.title;
-    const dataKey = Object.keys(obj.data[0]);
-    const data = obj.data;
-    let str = [];
+
+    let title=['PatientID','PatientName','SeriesInstanceUID','Modality', 'PatientAddress', 'PatientAge',
+         "StudyDate","Label",'AnnotationType','Length','Points']
+    
+    //填充基本信息和类型
+    let str=[]
     str.push(title.join(',') + '\r\n');
-    for (let i = 0; i < data.length; i++) {
-      let temp = [];
-      for (let j = 0; j < dataKey.length; j++) {
-        temp.push(data[i][dataKey[j]]);
+
+    for(let i= 0;i<details.length;i++){
+      let arr = new Array(title.length).fill("")
+      for(let j=0; j<title.length; j++){
+        if(title[j] in patientInfo){
+          arr[j]=patientInfo[title[j]]
+        }
+        else if(title[j]=="AnnotationType"){
+          arr[j]= details[i].toolName
+        }
+        else if(title[j] == "Label"){
+          arr[j] = details[i].tagName
+        }
+        else if(title[j] == "Length"){
+          arr[j] = details[i].length
+        }
+        else if(title[j] == "Points"){
+          arr[j] = JSON.stringify(details[i].handles)
+        }
       }
-      str.push(temp.join(',') + '\r\n');
+      str.push(arr.join(',') + '\r\n');
     }
+
+
+
     const blob = new Blob(['\uFEFF' + str.join('')], {
       type: 'test/csv;charset=utf-8',
     });
@@ -316,6 +310,8 @@ export function Part1() {
     downloadLink.click();
     window.URL.revokeObjectURL(url);
   }
+  //导出文件具体方法
+
 
   return (
     <div className="Part1">
