@@ -434,7 +434,8 @@ export function Part2() {
           init(imgRef.current)
           cut()
         }}>
-          <span className="iconfont toolIcons">&#xe631;</span>
+          <span className="iconfont to
+          olIcons">&#xe631;</span>
           <div className="txt">图像剪裁</div>
         </button>
 
@@ -476,73 +477,6 @@ export function Part2() {
           </div>
           {/* 大的图表 */}
           <div className="detailPic" ref={imgRef}></div>
-
-          {/* 坐标值信息显示 */}
-          {isShow ? (
-            <div className="position">
-              <span>X:{position.x}</span>
-              &nbsp;
-              <span>Y:{position.y}</span>
-            </div>
-          ) : null}
-          {/* 右下信息显示 */}
-          {isShow ? (
-            <div className="viewPort">
-              <div>Zoom:{Math.floor(viewPort.scale * 100)}%</div>
-              <div>
-                {" "}
-                WW/WL:
-                <span>
-                  {Math.floor(viewPort.voi.windowWidth)}/
-                  {Math.floor(viewPort.voi.windowCenter)}
-                </span>
-              </div>
-            </div>
-          ) : null}
-          {/* 病人信息显示 */}
-          {isShow ? (
-            <div className="PatientInfo">
-              <p>
-                Patient Name :{" "}
-                {patientInfo.PatientName
-                  ? patientInfo.PatientName
-                  : "undefined"}
-              </p>
-              <p>
-                Patient ID :{" "}
-                {patientInfo.PatientID ? patientInfo.PatientID : "undefined"}
-              </p>
-              <p>
-                Patinet Age :{" "}
-                {patientInfo.PatientAge ? patientInfo.PatientAge : "undefined"}
-              </p>
-              <p>
-                Patinet Address :{" "}
-                {patientInfo.PatientAddress
-                  ? patientInfo.PatientAddress
-                  : "undefined"}
-              </p>
-            </div>
-          ) : null}
-          {/* 切片文件信息显示 */}
-          {isShow ? (
-            <div className="study">
-              <p>
-                Modality :{" "}
-                {patientInfo.Modality ? patientInfo.Modality : "undefined"}
-              </p>
-              <p>
-                Study Date :{" "}
-                {patientInfo.StudyDate ? patientInfo.StudyDate : "undefined"}
-              </p>
-              <p>
-                Accession Number :{" "}
-                {patientInfo.AccessionNumber
-                  ? patientInfo.AccessionNumber
-                  : "undefined"}
-              </p>
-            </div>
-          ) : null}
         </div>
       </div>
     </div>
