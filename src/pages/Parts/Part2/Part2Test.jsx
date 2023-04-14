@@ -152,6 +152,7 @@ export function Part2Test() {
     }
     ctx.putImageData(imageData, 0, 0);
   }
+  //图片降噪
   function denoiseImage() {
     if (!cv) return;
 
