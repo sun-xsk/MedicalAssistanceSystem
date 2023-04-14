@@ -5,11 +5,11 @@ import {
   cornerstoneWADOImageLoader,
   cornerstoneTools,
 } from "../../../util/js/cornerstone";
-import extend from '../../../util/js/extend'
+import extend from "../../../util/js/extend";
 import Item from "./Item/Item";
-import getImagePixelModule from '../../../util/js/getImagePixelModule'
-import metaDataProvider from '../../../util/js/meteDataProvider'
-import './Part2.scss'
+import getImagePixelModule from "../../../util/js/getImagePixelModule";
+import metaDataProvider from "../../../util/js/meteDataProvider";
+import "./Part2.scss";
 import httpUtil from "../../../util/axios/httpUtil";
 import Header from "../Header/Header";
 import "./Part2Test.scss";
@@ -67,9 +67,11 @@ export function Part2Test() {
           );
           cornerstoneTools.setToolActiveForElement(
             imgRef.current,
-            mouseToolChain[i].name, {
-            mouseButtonMask: 1,
-          });
+            mouseToolChain[i].name,
+            {
+              mouseButtonMask: 1,
+            }
+          );
         } else {
           cornerstoneTools.addToolForElement(
             imgRef.current,
@@ -77,9 +79,11 @@ export function Part2Test() {
           );
           cornerstoneTools.setToolPassiveForElement(
             imgRef.current,
-            mouseToolChain[i].name, {
-            mouseButtonMask: 1,
-          });
+            mouseToolChain[i].name,
+            {
+              mouseButtonMask: 1,
+            }
+          );
         }
       }
     };
@@ -147,6 +151,33 @@ export function Part2Test() {
       }
     }
     ctx.putImageData(imageData, 0, 0);
+  }
+  function denoiseImage() {
+    if (!cv) return;
+
+    const imgCanvas = document.getElementsByClassName("cornerstone-canvas")[0];
+    //获取图片数据
+    const matImage = cv.imread(imgCanvas)
+    // 使用OpenCV进行高斯滤波
+    const ksize = new cv.Size(5, 5); // 高斯核大小
+    const sigmaX = 0; // X方向上的高斯核标准差
+    const sigmaY = 0; // Y方向上的高斯核标准差
+    cv.GaussianBlur(
+      matImage,
+      matImage,
+      ksize,
+      sigmaX,
+      sigmaY,
+      cv.BORDER_DEFAULT
+    );
+    // 展示处理后的图片
+    const ctx = imgCanvas.getContext("2d");
+    const outputImageData = new ImageData(
+      new Uint8ClampedArray(matImage.data),
+      matImage.cols,
+      matImage.rows
+    );
+    ctx.putImageData(outputImageData, 0, 0);
   }
 
   cornerstone.metaData.addProvider(function (type, imageId) {
@@ -222,58 +253,58 @@ export function Part2Test() {
   }, []);
   //图像剪裁
   const clip = () => {
-    const clipAreaWrap = useRef(null) // 截图区域dom
+    const clipAreaWrap = useRef(null); // 截图区域dom
     //const clipAreaWrap = imgRef; //截图区域dom
-    const clipCanvas = useRef(null) // 用于截图的的canvas，以及截图开始生成截图效果（背景置灰）
+    const clipCanvas = useRef(null); // 用于截图的的canvas，以及截图开始生成截图效果（背景置灰）
     //const drawCanvas = useRef(null) // 把图片绘制到canvas上方便 用于生成截取图片的base64数据
-    const drawCanvas = document.getElementsByClassName('cornerstone-canvas')[0];
-    const [clipImgData, setClipImgData] = useState('')
+    const drawCanvas = document.getElementsByClassName("cornerstone-canvas")[0];
+    const [clipImgData, setClipImgData] = useState("");
 
     const init = (wrap) => {
-      if (!wrap) return
-      clipAreaWrap.current = wrap
+      if (!wrap) return;
+      clipAreaWrap.current = wrap;
       console.log(wrap, clipAreaWrap);
-      clipCanvas.current = document.createElement('canvas')
+      clipCanvas.current = document.createElement("canvas");
       //drawCanvas.current = document.createElement('canvas')
       clipCanvas.current.style =
-        'width:100%;height:100%;z-index: 2;position: absolute;left: 0;top: 0;'
+        "width:100%;height:100%;z-index: 2;position: absolute;left: 0;top: 0;";
       //drawCanvas.current.style =
       //'width:100%;height:100%;z-index: 1;position: absolute;left: 0;top: 0;'
-      clipAreaWrap.current.appendChild(clipCanvas.current)
-      clipAreaWrap.current.appendChild(drawCanvas)
-    }
+      clipAreaWrap.current.appendChild(clipCanvas.current);
+      clipAreaWrap.current.appendChild(drawCanvas);
+    };
     // 截图
     const cut = (souceImg) => {
-      const drawCanvasCtx = drawCanvas.getContext('2d')
-      const clipCanvasCtx = clipCanvas.current.getContext('2d')
+      const drawCanvasCtx = drawCanvas.getContext("2d");
+      const clipCanvasCtx = clipCanvas.current.getContext("2d");
 
-      const wrapWidth = clipAreaWrap.current.clientWidth
-      const wrapHeight = clipAreaWrap.current.clientHeight
-      clipCanvas.current.width = wrapWidth
-      clipCanvas.current.height = wrapHeight
+      const wrapWidth = clipAreaWrap.current.clientWidth;
+      const wrapHeight = clipAreaWrap.current.clientHeight;
+      clipCanvas.current.width = wrapWidth;
+      clipCanvas.current.height = wrapHeight;
       //drawCanvas.current.width = wrapWidth
       //drawCanvas.current.height = wrapHeight
 
       // 设置截图时灰色背景
-      clipCanvasCtx.fillStyle = 'rgba(0,0,0,0.6)'
-      clipCanvasCtx.strokeStyle = 'rgba(0,143,255,1)'
+      clipCanvasCtx.fillStyle = "rgba(0,0,0,0.6)";
+      clipCanvasCtx.strokeStyle = "rgba(0,143,255,1)";
 
       // 生成一个截取区域的img 然后把它作为canvas的第一个参数
-      const clipImg = document.createElement('img')
-      clipImg.classList.add('img_anonymous')
-      clipImg.crossOrigin = 'anonymous'
+      const clipImg = document.createElement("img");
+      clipImg.classList.add("img_anonymous");
+      clipImg.crossOrigin = "anonymous";
       //clipImg.src = souceImg
 
       // 那其实画的是原始大小的clipImg
-      clipAreaWrap.current.appendChild(clipImg)
+      clipAreaWrap.current.appendChild(clipImg);
 
       // 绘制截图区域
       clipImg.onload = () => {
         // x,y -> 计算从drawCanvasCtx的的哪一x,y坐标点进行绘制
-        const x = Math.floor((wrapWidth - clipImg.width) / 2)
-        const y = Math.floor((wrapHeight - clipImg.height) / 2)
+        const x = Math.floor((wrapWidth - clipImg.width) / 2);
+        const y = Math.floor((wrapHeight - clipImg.height) / 2);
         // 用这个宽高在drawCanvasCtx的绘图只会绘制clipImg的小部分内容（因为假宽高比真宽高小），看起来就像是被放大了
-        const clipImgCopy = clipImg.cloneNode()
+        const clipImgCopy = clipImg.cloneNode();
         drawCanvasCtx.drawImage(
           clipImg,
           0,
@@ -284,18 +315,18 @@ export function Part2Test() {
           y,
           clipImg.width,
           clipImg.height
-        )
-      }
+        );
+      };
 
-      let start = null
+      let start = null;
 
       // 获取截图开始的点
       clipCanvas.current.onmousedown = function (e) {
         start = {
           x: e.offsetX,
-          y: e.offsetY
-        }
-      }
+          y: e.offsetY,
+        };
+      };
 
       // 绘制截图区域效果
       clipCanvas.current.onmousemove = function (e) {
@@ -308,88 +339,93 @@ export function Part2Test() {
             start.y,
             e.offsetX - start.x,
             e.offsetY - start.y
-          )
+          );
         }
-      }
+      };
 
       // 截图完毕，获取截图图片数据
-      document.addEventListener('mouseup', function (e) {
+      document.addEventListener("mouseup", function (e) {
         if (start) {
           var url = getClipPicUrl(
             {
               x: start.x,
               y: start.y,
               w: e.offsetX - start.x,
-              h: e.offsetY - start.y
+              h: e.offsetY - start.y,
             },
             drawCanvasCtx
-          )
-          start = null
+          );
+          start = null;
           //生成base64格式的图
-          setClipImgData(url)
+          setClipImgData(url);
         }
-      })
-    }
+      });
+    };
 
     const cancelCut = () => {
-      clipCanvas.current.width = clipAreaWrap.current.clientWidth
-      clipCanvas.current.height = clipAreaWrap.current.clientHeight
-      drawCanvas.current.width = clipAreaWrap.current.clientWidth
-      drawCanvas.current.height = clipAreaWrap.current.clientHeight
-      const drawCanvasCtx = drawCanvas.current.getContext('2d')
-      const clipCanvasCtx = clipCanvas.current.getContext('2d')
+      clipCanvas.current.width = clipAreaWrap.current.clientWidth;
+      clipCanvas.current.height = clipAreaWrap.current.clientHeight;
+      drawCanvas.current.width = clipAreaWrap.current.clientWidth;
+      drawCanvas.current.height = clipAreaWrap.current.clientHeight;
+      const drawCanvasCtx = drawCanvas.current.getContext("2d");
+      const clipCanvasCtx = clipCanvas.current.getContext("2d");
       drawCanvasCtx.clearRect(
         0,
         0,
         drawCanvas.current.clientWidth,
         drawCanvas.current.clientHeight
-      )
+      );
       clipCanvasCtx.clearRect(
         0,
         0,
         clipCanvas.current.clientWidth,
         clipCanvas.current.clientHeight
-      )
+      );
       //移除鼠标事件
-      clipCanvas.current.onmousedown = null
-      clipCanvas.current.onmousemove = null
-    }
+      clipCanvas.current.onmousedown = null;
+      clipCanvas.current.onmousemove = null;
+    };
 
     const getClipPicUrl = (area, drawCanvasCtx) => {
-      const canvas = document.createElement('canvas')
-      const context = canvas.getContext('2d')
-      const data = drawCanvasCtx.getImageData(0, 0, drawCanvasCtx.canvas.clientWidth, drawCanvasCtx.canvas.clientHeight);
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      const data = drawCanvasCtx.getImageData(
+        0,
+        0,
+        drawCanvasCtx.canvas.clientWidth,
+        drawCanvasCtx.canvas.clientHeight
+      );
       // const data = drawCanvasCtx.getImageData(area.x, area.y, area.w, area.h)
-      canvas.width = area.w
-      canvas.height = area.h
-      context.putImageData(data, 0, 0)
-      return canvas.toDataURL('image/png', 1)
-    }
+      canvas.width = area.w;
+      canvas.height = area.h;
+      context.putImageData(data, 0, 0);
+      return canvas.toDataURL("image/png", 1);
+    };
 
     // 绘制出截图的效果
     const fill = (context, ctxWidth, ctxHeight, x, y, w, h) => {
-      context.clearRect(0, 0, ctxWidth, ctxHeight)
-      context.beginPath()
+      context.clearRect(0, 0, ctxWidth, ctxHeight);
+      context.beginPath();
       //遮罩层
-      context.globalCompositeOperation = 'source-over'
-      context.fillRect(0, 0, ctxWidth, ctxHeight)
+      context.globalCompositeOperation = "source-over";
+      context.fillRect(0, 0, ctxWidth, ctxHeight);
       //画框
-      context.globalCompositeOperation = 'destination-out'
-      context.fillRect(x, y, w, h)
+      context.globalCompositeOperation = "destination-out";
+      context.fillRect(x, y, w, h);
       //描边
-      context.globalCompositeOperation = 'source-over'
-      context.moveTo(x, y)
-      context.lineTo(x + w, y)
-      context.lineTo(x + w, y + h)
-      context.lineTo(x, y + h)
-      context.lineTo(x, y)
+      context.globalCompositeOperation = "source-over";
+      context.moveTo(x, y);
+      context.lineTo(x + w, y);
+      context.lineTo(x + w, y + h);
+      context.lineTo(x, y + h);
+      context.lineTo(x, y);
       // context.stroke()
-      context.closePath()
-    }
-    return { init, cut, cancelCut, clipImgData }
-  }
+      context.closePath();
+    };
+    return { init, cut, cancelCut, clipImgData };
+  };
 
-  const { init, cut, cancelCut, clipImgData } = clip()
+  const { init, cut, cancelCut, clipImgData } = clip();
   return (
     <div className="Part2Test">
       <Header />
@@ -400,7 +436,7 @@ export function Part2Test() {
             <div className="txt">图像加强</div>
           </button>
 
-          <button className="singleTool" onClick={LimpidPic}>
+          <button className="singleTool" onClick={denoiseImage}>
             <span className="iconfont toolIcons">&#xe7ca;</span>
             <div className="txt">图像去噪</div>
           </button>
@@ -419,12 +455,19 @@ export function Part2Test() {
             <span className="iconfont toolIcons">&#xe631;</span>
             <div className="txt">图像剪裁</div>
           </button> */}
-          <button className="singleTool" onClick={() => {
-            init(imgRef.current)
-            cut()
-          }}>
-            <span className="iconfont to
-          olIcons">&#xe631;</span>
+          <button
+            className="singleTool"
+            onClick={() => {
+              init(imgRef.current);
+              cut();
+            }}
+          >
+            <span
+              className="iconfont to
+          olIcons"
+            >
+              &#xe631;
+            </span>
             <div className="txt">图像剪裁</div>
           </button>
         </div>
@@ -447,7 +490,7 @@ export function Part2Test() {
 
       {/* 下面展示图片 */}
       <div className="p-detail">
-      {/* 截图区域 */}
+        {/* 截图区域 */}
         <div className="clip-img-area">
           <img src={clipImgData} alt="" id="img" />
         </div>
@@ -455,14 +498,12 @@ export function Part2Test() {
         <div className="p-picList">
           <div className="showPic">
             {ids.map((item, index) => {
-              return <div key={index} ></div>
+              return <div key={index}></div>;
             })}
           </div>
         </div>
 
-        <div className="detailPicBox"
-          onMouseMove={(e) => handleMouseMove(e)}
-        >
+        <div className="detailPicBox" onMouseMove={(e) => handleMouseMove(e)}>
           <div
             className="detailPic"
             id="test"
