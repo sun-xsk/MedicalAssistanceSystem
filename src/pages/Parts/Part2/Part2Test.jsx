@@ -167,9 +167,6 @@ export function Part2Test() {
     const formdata = new FormData();
     formdata.append("file", files[0]);
     console.log(files[0]);
-    // httpUtil.upLoadFile(files[0]).then((res) => {
-    //   console.log(res);
-    // });
     imageIds = [];
     for (let i = 1; i < files.length; i++) {
       let file = files[i];
