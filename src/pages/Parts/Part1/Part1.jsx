@@ -290,7 +290,10 @@ export function Part1() {
           arr[j] = details[i].length
         }
         else if(title[j] == "Points"){
-          arr[j] = JSON.stringify(details[i].handles)
+          let reg = new RegExp("\"","g")
+          let points=JSON.stringify(details[i].handles)
+          arr[j] = points.replace(reg,"\"\"")
+          arr[j] = "\"" + arr[j] + "\""
         }
       }
       str.push(arr.join(',') + '\r\n');
