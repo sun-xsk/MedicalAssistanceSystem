@@ -198,7 +198,6 @@ export function Part2Test() {
     if (!files || !files.length) return;
     const formdata = new FormData();
     formdata.append("file", files[0]);
-    console.log(files[0]);
     imageIds = [];
     for (let i = 1; i < files.length; i++) {
       let file = files[i];
@@ -240,8 +239,21 @@ export function Part2Test() {
 
   // 下载文件
   function downLoad() {
-    const data = { test1: [[1, 1, 1], [1, 1, 1, 1]], test2: [[0, 0, 0, 0], [0, 0, 0]] };
-    btnClickExport(data);
+    /* const data = { test1: [[1, 1, 1], [1, 1, 1, 1]], test2: [[0, 0, 0, 0], [0, 0, 0]] };
+    btnClickExport(data); */
+    const dcmData = cornerstone.getEnabledElement(imgRef.current)
+    // 判断dcm文件是否存在
+    if(!dcmData.image) return ;
+    //获取文件名
+    const dcmName = dcmData.image.imageId
+    const match = dcmName.match(/(?<=wadouri:http:\/\/)\d-\d{3}/);
+		const newName = match[0];
+    
+    const dcmCanvas = document.getElementsByClassName("cornerstone-canvas")[0];
+    const a = document.createElement('a')
+    a.href = dcmCanvas.toDataURL("image/png");
+    a.download = newName+'.png';
+    a.click()
   }
 
   useEffect(() => {
@@ -504,7 +516,7 @@ export function Part2Test() {
           </div>
         </div>
 
-        <div className="detailPicBox" onMouseMove={(e) => handleMouseMove(e)}>
+        <div className="detailPicBox" /* onMouseMove={(e) => handleMouseMove(e)} */>
           <div
             className="detailPic"
             id="test"

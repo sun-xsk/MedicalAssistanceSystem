@@ -42,6 +42,32 @@ export default function Home() {
           </div>
         </div>
       </div>
+      <div className="h-content">
+        <div className="h-c-center">
+          <div className="h-c-left">
+            <div className="top">Part3</div>
+            <div className="content">
+              <div className="Span">
+                医学影像检测工具软件
+              </div>
+            </div>
+            <Link to="/Part3" className="link">
+              click here to use this tool &gt;
+            </Link>
+          </div>
+          <div className="h-c-right">
+            <div className="top">Part4</div>
+            <div className="content">
+              <div className="Span">
+                医学影像辅助判读工具软件
+              </div>
+            </div>
+            <Link to="/Part4" className="link">
+              click here to use this tool &gt;
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
