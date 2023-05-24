@@ -452,11 +452,11 @@ export function Part2Test() {
             <div className="txt">左右翻转</div>
           </button>
 
-          <button className="singleTool" onClick={chooseTool("ZoomMouseWheel")}>
+          {/* <button className="singleTool" onClick={chooseTool("ZoomMouseWheel")}>
             <span className="iconfont toolIcons">&#xe631;</span>
             <div className="txt">图像剪裁</div>
-          </button>
-         {/*  <button
+          </button> */}
+          {/* <button
             className="singleTool"
             onClick={() => {
               init(imgRef.current);
@@ -471,6 +471,14 @@ export function Part2Test() {
             </span>
             <div className="txt">图像剪裁</div>
           </button> */}
+          <button className="singleTool" onClick={() => {
+            init(imgRef.current)
+            cut()
+          }}>
+            <span className="iconfont to
+          olIcons">&#xe631;</span>
+            <div className="txt">图像剪裁</div>
+          </button>
         </div>
         <div className="right">
           <button className="uploadTool" onClick={uploadFiles}>
