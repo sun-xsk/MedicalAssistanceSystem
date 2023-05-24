@@ -163,5 +163,9 @@
 
 .clip-img-area{
   position: absolute;
-  left: 23vw;
+  right: 2vw;
+  img{
+    width: 10vw;
+    height: 10vw;
+  }
 }

@@ -243,16 +243,16 @@ export function Part2Test() {
     btnClickExport(data); */
     const dcmData = cornerstone.getEnabledElement(imgRef.current)
     // 判断dcm文件是否存在
-    if(!dcmData.image) return ;
+    if (!dcmData.image) return;
     //获取文件名
     const dcmName = dcmData.image.imageId
     const match = dcmName.match(/(?<=wadouri:http:\/\/)\d-\d{3}/);
-		const newName = match[0];
-    
+    const newName = match[0];
+
     const dcmCanvas = document.getElementsByClassName("cornerstone-canvas")[0];
     const a = document.createElement('a')
     a.href = dcmCanvas.toDataURL("image/png");
-    a.download = newName+'.png';
+    a.download = newName + '.png';
     a.click()
   }
 
@@ -270,7 +270,8 @@ export function Part2Test() {
     //const clipAreaWrap = imgRef; //截图区域dom
     const clipCanvas = useRef(null); // 用于截图的的canvas，以及截图开始生成截图效果（背景置灰）
     //const drawCanvas = useRef(null) // 把图片绘制到canvas上方便 用于生成截取图片的base64数据
-    const drawCanvas = document.getElementsByClassName("cornerstone-canvas")[0];
+    let drawCanvas = document.getElementsByClassName("cornerstone-canvas")[0];
+   
     const [clipImgData, setClipImgData] = useState("");
 
     const init = (wrap) => {
@@ -284,6 +285,9 @@ export function Part2Test() {
       //drawCanvas.current.style =
       //'width:100%;height:100%;z-index: 1;position: absolute;left: 0;top: 0;'
       clipAreaWrap.current.appendChild(clipCanvas.current);
+     drawCanvas = document.getElementsByClassName("cornerstone-canvas")[0];
+     console.log(drawCanvas);
+
       clipAreaWrap.current.appendChild(drawCanvas);
     };
     // 截图
