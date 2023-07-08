@@ -1,0 +1,13 @@
+* {
+  padding: 0;
+  margin: 0;
+  font-family: "Bookman Old Style";
+}
+
+@mixin flexBox($justify: space-between, $align: center) {
+  display: flex;
+  justify-content: $justify;
+  align-items: $align;
+}
+
+$mainColor:#34b5e4;

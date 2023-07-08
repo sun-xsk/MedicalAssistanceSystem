@@ -1,0 +1,38 @@
+.patientWrapper{
+  background-color: #242c38;
+  width: 100%;
+  height: 100vh;
+  .patientTitle{
+    padding: 12px 0;
+    text-align: center;
+    font-size: 2rem;
+    color: white;
+  }
+  .patientSearchBoxWrapper{
+    padding-top: 20px;
+    background-color: #0d1117;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: nowrap;
+    .patientSearchBox{
+      display: flex;
+      gap: 2rem;
+      input{
+        width: auto;
+      }
+    }
+  }
+
+  //*patient表格样式
+  .patientTable{
+    background-color: transparent;
+  }
+  .patientTable th, .patientTable div, .patientTable span{
+    color: #989898;
+    background-color: transparent;
+    border: none;
+  }
+  .ant-table-tbody > tr.ant-table-row:hover > td, .ant-table-tbody > tr > td.ant-table-cell-row-hove:hover{
+    background-color: #0d1117;
+  }
+}

@@ -1,0 +1,85 @@
+@import "../../util/scss/all.scss";
+
+.Home {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  background: rgb(199, 133, 133);
+  @include flexBox();
+  flex-direction: column;
+  .h-header {
+    width: 100%;
+    height: 20%;
+    background-color: #161b22;
+    border-bottom: #00a4d9 1px solid;
+    color: #dddddd;
+    @include flexBox(center);
+    .h-center {
+      // width: 68%;
+      height: 60%;
+      @include flexBox(center);
+      .h-h-txt {
+        height: 100%;
+        margin-left: 25px;
+        font-size: 36px;
+        color: #00a4d9;
+        @include flexBox(flex-start);
+      }
+    }
+  }
+  .h-content {
+    background-color: #0d1117;
+    width: 100%;
+    height: 80%;
+    @include flexBox(center);
+    .h-c-center {
+      width: 80%;
+      height: 100%;
+      @include flexBox(space-around);
+      .h-c-left,
+      .h-c-right {
+        width: 35%;
+        height: 70%;
+        background-color: #242c38;
+        border: #0078a0 1px solid;
+        border-radius: 9px;
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.8);
+        transition: 0.3s;
+        @include flexBox(center);
+        flex-direction: column;
+        color: #02aee8;
+        .top {
+          width: 95%;
+          height: 15%;
+          @include flexBox(flex-start);
+          font-size: 26px;
+        }
+        .content {
+          width: 95%;
+          height: 65%;
+          .Span {
+            padding: 10px;
+            font-size: 17px;
+          }
+        }
+        .link {
+          width: 95%;
+          height: 15%;
+          color: #989898;
+          font-size: 15px;
+          text-decoration: underline;
+        }
+        .link:hover {
+          color: #0dc7c1;
+        }
+      }
+      .h-c-left:hover,
+      .h-c-right:hover {
+        width: 35.2%;
+        height: 70.2%;
+        cursor: pointer;
+        box-shadow: 0 10px 25px rgba(54, 54, 54, 0.5);
+      }
+    }
+  }
+}
