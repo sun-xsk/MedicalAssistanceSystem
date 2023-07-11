@@ -147,7 +147,7 @@ export function Part1() {
 	let getImageId = (seriesInstanceUID, instanceNumber) => {
 		return (
 			"wadouri:" +
-			"http://10.16.48.191:8080/MedicalSystem/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber?" +
+			"http://8.130.137.118:8080/MedicalSystem/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber?" +
 			`seriesInstanceUID=${seriesInstanceUID}&instanceNumber=${instanceNumber}`
 		);
 	};

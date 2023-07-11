@@ -541,7 +541,7 @@ export function Part2Test() {
 
 					<button className="singleTool" onClick={chooseTool("ZoomMouseWheel")}>
 						<span className="iconfont toolIcons">&#xe631;</span>
-						<div className="txt">图像剪裁</div>
+						<div className="txt">图像缩放</div>
 					</button>
 					{/*  <button
             className="singleTool"

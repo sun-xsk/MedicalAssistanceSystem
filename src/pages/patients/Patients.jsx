@@ -16,7 +16,13 @@ export function Patients() {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const [loading, setLoading] = useState(true);
-	const [dataList, setDataList] = useState({ rows: [], total: 0 });
+	const [dataList, setDataList] = useState({ rows: [], total: 0 }); //源数据
+	//搜索框数据
+	const [filter, setFilter] = useState({
+		patientId: undefined,
+		seriesInstanceUID: undefined,
+		studyDate: undefined,
+	});
 
 	//antd相关配置
 	const { RangePicker } = DatePicker;
@@ -40,22 +46,55 @@ export function Patients() {
 		},
 	];
 
+	const onSearch = (data) => {
+		if (data.patientId || data.studyDate || data.seriesInstanceUID) {
+			setLoading(true)
+			let flag = data.studyDate?.length;
+			let timeList;
+			if (flag) {
+				//转换时间格式
+				timeList = data.studyDate.map((time) =>
+					time.format("YYYYMMDD").toString()
+				);
+			}
+			setFilter({ ...data, studyDate: timeList });
+		}
+	};
+
 	useEffect(() => {
-		getMainShow()
-			.then((res) => {
-				console.log(res.data);
-				setDataList(res.data);
-			})
-			.finally(() => {
-				setLoading(false);
-			});
-	}, []);
+		if (filter.patientId || filter.seriesInstanceUID || filter.studyDate) {
+			getMainShow(filter)
+				.then((res) => {
+					console.log(res);
+					// setDataList(res.data);
+					// setDataList({ rows: res.data });
+				})
+				.finally(() => {
+					setLoading(false);
+				});
+		} else {
+			getMainShow()
+				.then((res) => {
+					console.log(res);
+					// setDataList(res.data);
+					// setDataList({ rows: res.data });
+				})
+				.finally(() => {
+					setLoading(false);
+				});
+		}
+	}, [filter]);
 	return (
 		<div className="patientWrapper">
 			<ConfigProvider locale={zhCN}>
 				<div className="patientTitle">医学影像深度智能诊断系统</div>
 				<div className="patientSearchBoxWrapper">
-					<Form name="filter" form={form} className="patientSearchBox">
+					<Form
+						name="filter"
+						onFinish={onSearch}
+						form={form}
+						className="patientSearchBox"
+					>
 						<Form.Item name={"patientId"}>
 							<Input name={"patientId"} placeholder="患者编号" />
 						</Form.Item>
@@ -63,12 +102,18 @@ export function Patients() {
 							<Input placeholder="检查编号" />
 						</Form.Item>
 						<Form.Item name={"studyDate"}>
-							<RangePicker />
+							<RangePicker format={"YYMMDD"} />
 						</Form.Item>
-						<Button>检索</Button>
+						<Button htmlType="submit">检索</Button>
 						<Button
 							onClick={() => {
+								setLoading(true);
 								form.resetFields();
+								setFilter({
+									patientId: undefined,
+									seriesInstanceUID: undefined,
+									studyDate: undefined,
+								});
 							}}
 						>
 							重置
@@ -93,7 +138,6 @@ export function Patients() {
 						onRow={(record) => {
 							return {
 								onClick: () => navigate(location.state, { state: { record } }),
-								// onClick: () => getPatientDicom(record),
 							};
 						}}
 						pagination={{

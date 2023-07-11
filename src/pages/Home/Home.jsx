@@ -45,7 +45,7 @@ export default function Home() {
 						<div className="content">
 							<div className="Span">医学影像检测工具软件</div>
 						</div>
-						<Link to="/Part3" className="link">
+						<Link to="" className="link">
 							click here to use this tool &gt;
 						</Link>
 					</div>
@@ -54,7 +54,7 @@ export default function Home() {
 						<div className="content">
 							<div className="Span">医学影像辅助判读工具软件</div>
 						</div>
-						<Link to="/Part4" className="link">
+						<Link to="" className="link">
 							click here to use this tool &gt;
 						</Link>
 					</div>
