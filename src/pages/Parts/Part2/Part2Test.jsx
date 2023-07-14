@@ -13,11 +13,11 @@ import "./Part2.scss";
 import {
 	uploadFile,
 	getDicomFileByPatientId_StudyDate_SeriesInstanceUID,
+	getFileInfo,
 } from "../../../util/api/httpUtil";
 import Header from "../Header/Header";
-import "./Part2Test.scss";
 import { useLocation } from "react-router-dom";
-import { btnClickExport } from "../../../util/js/downloadFile";
+import "./Part2Test.scss";
 
 // 添加对应的工具信息
 const mouseToolChain = [
@@ -40,8 +40,21 @@ const mouseToolChain = [
 	{ name: "xxx", func: cornerstoneTools.clipBoxToDisplayedArea, config: {} },
 ];
 
+const toolState = {};
+
+let activeToolName = ""; // 激活工具名称
+let prevToolName = ""; // 上一个激活工具名称
+
 export function Part2Test() {
 	const [ids, setIds] = useState([]);
+	const [isShow, setIsShow] = useState(false);
+	const [position, setPosition] = useState({ x: 0, y: 0 });
+	const [patientInfo, setPatientInfo] = useState({});
+	const [viewPort, setViewPort] = useState({
+		voi: { windowWidth: "", windowCenter: "" },
+		scale: 0,
+	});
+
 	const fileRef = useRef(null);
 	const imgRef = useRef(null);
 	const location = useLocation();
@@ -52,14 +65,6 @@ export function Part2Test() {
 	let fileImgId = ""; // 当前选中的 DCM文件 imageId
 	let imageIds = [];
 
-	// httpUtil.getRegisterStatus().then((res) => {
-	//   console.log(res);
-	// });
-	// axios
-	//   .get("http://43.142.168.114:8001/MedicalSystem/file/testConnect")
-	//   .then((res) => {
-	//     console.log(res);
-	//   });
 	//   判断是需要哪一个工具
 	function chooseTool(name) {
 		return () => {
@@ -92,6 +97,39 @@ export function Part2Test() {
 			}
 		};
 	}
+
+	function chooseTool1(name) {
+		return () => {
+			const tool = name;
+			if (!tool) return;
+			if (prevToolName) {
+				cornerstoneTools.setToolPassiveForElement(
+					imgRef.current,
+					prevToolName,
+					{
+						mouseButtonMask: 1,
+					}
+				); // 把上一个激活工具冻结
+			}
+			activeToolName = tool + "Tool";
+			if (!toolState[activeToolName]) {
+				// 不能重复 addTool
+				cornerstoneTools.addToolForElement(
+					imgRef.current,
+					cornerstoneTools[activeToolName],
+					tool === "TextMarker" ? marker() : {}
+				);
+				toolState[activeToolName] = true;
+			}
+			prevToolName = tool;
+			// 激活工具
+			cornerstoneTools.setToolActiveForElement(imgRef.current, tool, {
+				mouseButtonMask: 1,
+			});
+		};
+	}
+
+
 	//   上下左右翻转图片
 	function upsideDownTb() {
 		upTb = !upTb;
@@ -197,15 +235,16 @@ export function Part2Test() {
 		fileRef.current.click();
 	}
 	//   加载图片
-	function loadFiles(e) {
+	async function loadFiles(e) {
 		let files = e.target.files;
 		if (!files || !files.length) return;
 		const formdata = new FormData();
+		const demoData = new FormData();
+		demoData.append("file", files[0]);
 		imageIds = [];
 		for (let i = 1; i < files.length; i++) {
-		  formdata.append("file", files[i-1]);
-			
-      let file = files[i];
+			formdata.append("file", files[i - 1]);
+			let file = files[i];
 			let read = new FileReader();
 			imageIds[i - 1] = "";
 			read.readAsArrayBuffer(file);
@@ -226,7 +265,6 @@ export function Part2Test() {
 						fileImgId
 					)
 				);
-
 				const stack = {
 					currentImageIdIndex: 0,
 					imageIds,
@@ -239,8 +277,32 @@ export function Part2Test() {
 				});
 			};
 		}
-		uploadFile(formdata);
+		//uploadFile(formdata);
+		setIsShow(true);
+		let fileInfo = await getFileInfo(demoData);
+		let patientInfo = { ...fileInfo.data };
+		//添加文件id
+		let filePaths = [];
+		for (let i = 1; i <= files.length; i++) {
+			filePaths.push(getImageId(patientInfo.SeriesInstanceUID, i));
+		}
+		sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
+		sessionStorage.setItem("PATIENT_INFO", JSON.stringify(patientInfo));
 	}
+
+	//鼠标位置定位
+	const handleMouseMove = (e) => {
+		setPosition({
+			x: e.nativeEvent.offsetX,
+			y: e.nativeEvent.offsetY,
+		});
+		if (imgRef.current && isShow) {
+			setViewPort((viewPort) => ({
+				...viewPort,
+				...cornerstone.getViewport(imgRef.current),
+			}));
+		}
+	};
 
 	// 下载文件
 	function downLoad() {
@@ -251,13 +313,29 @@ export function Part2Test() {
 		const dcmName = dcmData.image.imageId;
 		const match = dcmName.match(/(?<=wadouri:http:\/\/)\d-\d{3}/);
 		const newName = match[0];
-
 		const dcmCanvas = document.getElementsByClassName("cornerstone-canvas")[0];
 		const a = document.createElement("a");
 		a.href = dcmCanvas.toDataURL("image/png");
 		a.download = newName + ".png";
 		a.click();
 	}
+
+	const getImageId = (seriesInstanceUID, instanceNumber) => {
+		return (
+			"wadouri:" +
+			"http://8.130.137.118:8080/MedicalSystem/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber?" +
+			`seriesInstanceUID=${seriesInstanceUID}&instanceNumber=${instanceNumber}`
+		);
+	};
+	//获取患者信息
+
+	useEffect(() => {
+		let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null;
+		if (path && isShow) {
+			//从SessionStorage中获取信息
+			setPatientInfo(JSON.parse(sessionStorage.getItem("PATIENT_INFO")));
+		}
+	}, [isShow]);
 
 	//获取患者对应的dicom
 	const getPatientDicom = (record) => {
@@ -268,60 +346,7 @@ export function Part2Test() {
 			studyDate
 		).then(
 			(res) => {
-        console.log(res);
-				const data = Object.values(res)[0];
-				const names = Object.keys(res)[0];
-				const blob = new Blob([data], { type: "application/dicom" });
-				const fr = new FileReader();
-				fr.readAsArrayBuffer(blob);
-				fr.onload = function () {  
-          function saveByteArrayToFile(byteArray, fileName) {
-						// 创建Blob对象
-						var blob = new Blob([byteArray]);
-
-						// 创建下载链接
-						var downloadLink = document.createElement("a");
-						downloadLink.href = URL.createObjectURL(blob);
-						downloadLink.download = fileName;
-
-						// 触发下载
-						downloadLink.click();
-					}
-          console.log(this.result);
-          //saveByteArrayToFile(this.result, '128.dcm')
-
-					/* result = dicomParser.parseDicom(new Uint8Array(this.result));
-					let url = "http://" + names + ".dcm";
-					fileImgId = "wadouri:" + url;
-					// imageIds.push(fileImgId)
-					imageIds[i - 1] = fileImgId;
-					//设置映射关系
-					cornerstoneWADOImageLoader.wadouri.dataSetCacheManager.add(
-						url,
-						result
-					);
-					cornerstone.imageCache.putImageLoadObject(
-						fileImgId,
-						cornerstoneWADOImageLoader.wadouri.loadImageFromPromise(
-							new Promise((res) => {
-								res(result);
-							}),
-							fileImgId
-						)
-					);
-
-					const stack = {
-						currentImageIdIndex: 0,
-						imageIds,
-					};
-					console.log(imageIds[0]);
-					//加载dcm文件并缓存
-					cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
-						cornerstone.displayImage(imgRef.current, img);
-						cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
-						cornerstoneTools.addToolState(imgRef.current, "stack", stack);
-					}); */
-				};
+				console.log(res);
 			},
 			(err) => {
 				console.log(err);
@@ -519,7 +544,15 @@ export function Part2Test() {
 			<Header />
 			<div className="toolBar">
 				<div className="left">
-					<button className="singleTool" onClick={chooseTool("Wwwc")}>
+					<button
+						className="singleTool"
+						onClick={chooseTool1("StackScrollMouseWheel")}
+					>
+						<span className="iconfont toolIcons">&#xe6f6;</span>
+						<div className="txt">滚动切片</div>
+					</button>
+
+					<button className="singleTool" onClick={chooseTool1("Wwwc")}>
 						<span className="iconfont toolIcons">&#xe635;</span>
 						<div className="txt">图像加强</div>
 					</button>
@@ -539,7 +572,7 @@ export function Part2Test() {
 						<div className="txt">左右翻转</div>
 					</button>
 
-					<button className="singleTool" onClick={chooseTool("ZoomMouseWheel")}>
+					<button className="singleTool" onClick={chooseTool1("ZoomMouseWheel")}>
 						<span className="iconfont toolIcons">&#xe631;</span>
 						<div className="txt">图像缩放</div>
 					</button>
@@ -585,15 +618,13 @@ export function Part2Test() {
 
 				<div className="p-picList">
 					<div className="showPic">
-						{ids.map((item, index) => {
+						{/* ids.map((item, index) => {
 							return <div key={index}></div>;
-						})}
+						}) */}
 					</div>
 				</div>
 
-				<div
-					className="detailPicBox" /* onMouseMove={(e) => handleMouseMove(e)} */
-				>
+				<div className="detailPicBox" onMouseMove={(e) => handleMouseMove(e)}>
 					<div
 						className="detailPic"
 						id="test"
@@ -601,6 +632,72 @@ export function Part2Test() {
 						onMouseDown={() => false}
 						ref={imgRef}
 					></div>
+
+					{isShow ? (
+						<div className="position">
+							<span>X:{position.x}</span>
+							&nbsp;
+							<span>Y:{position.y}</span>
+						</div>
+					) : null}
+
+					{isShow ? (
+						<div className="viewPort">
+							<div>Zoom:{Math.floor(viewPort.scale * 100)}%</div>
+							<div>
+								{" "}
+								WW/WL:
+								<span>
+									{Math.floor(viewPort.voi.windowWidth)}/
+									{Math.floor(viewPort.voi.windowCenter)}
+								</span>
+							</div>
+						</div>
+					) : null}
+
+					{isShow ? (
+						<div className="PatientInfo">
+							<p>
+								Patient Name :{" "}
+								{patientInfo.PatientName
+									? patientInfo.PatientName
+									: "undefined"}
+							</p>
+							<p>
+								Patient ID :{" "}
+								{patientInfo.PatientID ? patientInfo.PatientID : "undefined"}
+							</p>
+							<p>
+								Patinet Age :{" "}
+								{patientInfo.PatientAge ? patientInfo.PatientAge : "undefined"}
+							</p>
+							<p>
+								Patinet Address :{" "}
+								{patientInfo.PatientAddress
+									? patientInfo.PatientAddress
+									: "undefined"}
+							</p>
+						</div>
+					) : null}
+
+					{isShow ? (
+						<div className="study">
+							<p>
+								Modality :{" "}
+								{patientInfo.Modality ? patientInfo.Modality : "undefined"}
+							</p>
+							<p>
+								Study Date :{" "}
+								{patientInfo.StudyDate ? patientInfo.StudyDate : "undefined"}
+							</p>
+							<p>
+								Accession Number :{" "}
+								{patientInfo.AccessionNumber
+									? patientInfo.AccessionNumber
+									: "undefined"}
+							</p>
+						</div>
+					) : null}
 				</div>
 			</div>
 		</div>

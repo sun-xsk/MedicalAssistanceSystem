@@ -75,7 +75,7 @@ export function Patients() {
 		} else {
 			getMainShow()
 				.then((res) => {
-					console.log(res);
+					//console.log(res);
 					// setDataList(res.data);
 					// setDataList({ rows: res.data });
 				})

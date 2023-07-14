@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import useSyncCallback from "../../../util/js/useSyncCallback";
 
 import {
 	cornerstone,
@@ -9,7 +8,6 @@ import {
 } from "../../../util/js/cornerstone";
 
 import {
-	testConnect,
 	uploadFile,
 	// getInstanceNumbers,
 	// getDicomFile,
@@ -154,7 +152,7 @@ export function Part1() {
 
 	useEffect(() => {
 		let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null;
-		if (path) {
+		if (path && isShow) {
 			let imageIds = path;
 			let stack = {
 				currentImageIdIndex: 0,
@@ -166,7 +164,6 @@ export function Part1() {
 				cornerstoneTools.addToolState(imgRef.current, "stack", stack);
 			});
 			setPatientInfo(JSON.parse(sessionStorage.getItem("PATIENT_INFO")));
-			setIsShow(true);
 			setData(JSON.parse(sessionStorage.getItem("FILE_PATH")));
 		}
 	}, [isShow]);
@@ -262,7 +259,7 @@ export function Part1() {
 	const handleMouseMove = (e) => {
 		setPosition({
 			x: e.nativeEvent.offsetX,
-			y: e.nativeEvent.offsetX,
+			y: e.nativeEvent.offsetY,
 		});
 		if (imgRef.current && isShow) {
 			setViewPort((viewPort) => ({
