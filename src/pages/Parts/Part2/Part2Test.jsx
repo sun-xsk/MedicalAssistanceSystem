@@ -129,7 +129,6 @@ export function Part2Test() {
 		};
 	}
 
-
 	//   上下左右翻转图片
 	function upsideDownTb() {
 		upTb = !upTb;
@@ -368,26 +367,20 @@ export function Part2Test() {
 	//图像剪裁
 	const clip = () => {
 		const clipAreaWrap = useRef(null); // 截图区域dom
-		//const clipAreaWrap = imgRef; //截图区域dom
 		const clipCanvas = useRef(null); // 用于截图的的canvas，以及截图开始生成截图效果（背景置灰）
-		//const drawCanvas = useRef(null) // 把图片绘制到canvas上方便 用于生成截取图片的base64数据
 		const drawCanvas = document.getElementsByClassName("cornerstone-canvas")[0];
 		const [clipImgData, setClipImgData] = useState("");
 		const init = (wrap) => {
 			if (!wrap) return;
 			clipAreaWrap.current = wrap;
-			console.log(wrap, clipAreaWrap);
 			clipCanvas.current = document.createElement("canvas");
-			//drawCanvas.current = document.createElement('canvas')
 			clipCanvas.current.style =
 				"width:100%;height:100%;z-index: 2;position: absolute;left: 0;top: 0;";
-			//drawCanvas.current.style =
-			//'width:100%;height:100%;z-index: 1;position: absolute;left: 0;top: 0;'
 			clipAreaWrap.current.appendChild(clipCanvas.current);
 			clipAreaWrap.current.appendChild(drawCanvas);
 		};
 		// 截图
-		const cut = (souceImg) => {
+		const cut = () => {
 			const drawCanvasCtx = drawCanvas.getContext("2d");
 			const clipCanvasCtx = clipCanvas.current.getContext("2d");
 
@@ -395,8 +388,6 @@ export function Part2Test() {
 			const wrapHeight = clipAreaWrap.current.clientHeight;
 			clipCanvas.current.width = wrapWidth;
 			clipCanvas.current.height = wrapHeight;
-			//drawCanvas.current.width = wrapWidth
-			//drawCanvas.current.height = wrapHeight
 
 			// 设置截图时灰色背景
 			clipCanvasCtx.fillStyle = "rgba(0,0,0,0.6)";
@@ -406,10 +397,9 @@ export function Part2Test() {
 			const clipImg = document.createElement("img");
 			clipImg.classList.add("img_anonymous");
 			clipImg.crossOrigin = "anonymous";
-			//clipImg.src = souceImg
 
 			// 那其实画的是原始大小的clipImg
-			clipAreaWrap.current.appendChild(clipImg);
+			//clipAreaWrap.current.appendChild(clipImg);
 
 			// 绘制截图区域
 			clipImg.onload = () => {
@@ -469,8 +459,10 @@ export function Part2Test() {
 						drawCanvasCtx
 					);
 					start = null;
-					//生成base64格式的图
+					//生成base64格式的url
 					setClipImgData(url);
+					cancelCut();
+					downloadBase64(url, "clipped");
 				}
 			});
 		};
@@ -478,16 +470,7 @@ export function Part2Test() {
 		const cancelCut = () => {
 			clipCanvas.current.width = clipAreaWrap.current.clientWidth;
 			clipCanvas.current.height = clipAreaWrap.current.clientHeight;
-			drawCanvas.current.width = clipAreaWrap.current.clientWidth;
-			drawCanvas.current.height = clipAreaWrap.current.clientHeight;
-			const drawCanvasCtx = drawCanvas.current.getContext("2d");
 			const clipCanvasCtx = clipCanvas.current.getContext("2d");
-			drawCanvasCtx.clearRect(
-				0,
-				0,
-				drawCanvas.current.clientWidth,
-				drawCanvas.current.clientHeight
-			);
 			clipCanvasCtx.clearRect(
 				0,
 				0,
@@ -497,23 +480,42 @@ export function Part2Test() {
 			//移除鼠标事件
 			clipCanvas.current.onmousedown = null;
 			clipCanvas.current.onmousemove = null;
+			//移除临时截图创建的canvas
+			imgRef.current.children[0].remove();
 		};
 
 		const getClipPicUrl = (area, drawCanvasCtx) => {
 			const canvas = document.createElement("canvas");
 			const context = canvas.getContext("2d");
-			const data = drawCanvasCtx.getImageData(
-				0,
-				0,
-				drawCanvasCtx.canvas.clientWidth,
-				drawCanvasCtx.canvas.clientHeight
-			);
-			// const data = drawCanvasCtx.getImageData(area.x, area.y, area.w, area.h)
+			const data = drawCanvasCtx.getImageData(area.x, area.y, area.w, area.h);
 			canvas.width = area.w;
 			canvas.height = area.h;
 			context.putImageData(data, 0, 0);
 			return canvas.toDataURL("image/png", 1);
 		};
+
+		//base64格式下载png
+		function downloadBase64(content, fileName) {
+			var base64ToBlob = function (code) {
+				let parts = code.split(";base64,");
+				let contentType = parts[0].split(":")[1];
+				let raw = window.atob(parts[1]);
+				let rawLength = raw.length;
+				let uInt8Array = new Uint8Array(rawLength);
+				for (let i = 0; i < rawLength; ++i) {
+					uInt8Array[i] = raw.charCodeAt(i);
+				}
+				return new Blob([uInt8Array], {
+					type: contentType,
+				});
+			};
+			let aLink = document.createElement("a");
+			let blob = base64ToBlob(content); //new Blob([content]);
+			aLink.download = fileName + ".png";
+			aLink.href = URL.createObjectURL(blob);
+			aLink.click();
+			aLink.remove();
+		}
 
 		// 绘制出截图的效果
 		const fill = (context, ctxWidth, ctxHeight, x, y, w, h) => {
@@ -572,25 +574,37 @@ export function Part2Test() {
 						<div className="txt">左右翻转</div>
 					</button>
 
-					<button className="singleTool" onClick={chooseTool1("ZoomMouseWheel")}>
+					<button
+						className="singleTool"
+						onClick={chooseTool1("ZoomMouseWheel")}
+					>
 						<span className="iconfont toolIcons">&#xe631;</span>
 						<div className="txt">图像缩放</div>
 					</button>
-					{/*  <button
-            className="singleTool"
-            onClick={() => {
-              init(imgRef.current);
-              cut();
-            }}
-          >
-            <span
-              className="iconfont to
+					<button
+						className="singleTool"
+						onClick={() => {
+							if (prevToolName) {
+								cornerstoneTools.setToolPassiveForElement(
+									imgRef.current,
+									prevToolName,
+									{
+										mouseButtonMask: 1,
+									}
+								); // 把上一个激活工具冻结
+							}
+							init(imgRef.current);
+							cut();
+						}}
+					>
+						<span
+							className="iconfont to
           olIcons"
-            >
-              &#xe631;
-            </span>
-            <div className="txt">图像剪裁</div>
-          </button> */}
+						>
+							&#xe631;
+						</span>
+						<div className="txt">图像剪裁</div>
+					</button>
 				</div>
 				<div className="right">
 					<button className="uploadTool" onClick={uploadFiles}>
@@ -612,9 +626,9 @@ export function Part2Test() {
 			{/* 下面展示图片 */}
 			<div className="p-detail">
 				{/* 截图区域 */}
-				<div className="clip-img-area">
+				{/* <div className="clip-img-area">
 					<img src={clipImgData} alt="" id="img" />
-				</div>
+				</div> */}
 
 				<div className="p-picList">
 					<div className="showPic">
