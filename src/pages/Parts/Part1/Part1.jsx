@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 
 import {
 	cornerstone,
-	// dicomParser,
-	// cornerstoneWADOImageLoader,
+	dicomParser,
+	cornerstoneWADOImageLoader,
 	cornerstoneTools,
 } from "../../../util/js/cornerstone";
 
@@ -92,14 +92,10 @@ export function Part1() {
 	const [patientInfo, setPatientInfo] = useState({});
 	const [isShow, setIsShow] = useState(false);
 	const [details, setDetails] = useState([]);
-	let [data, setData] = useState([]);
-	let [obj, setObj] = useState({});
 
 	useEffect(() => {
 		cornerstone.enable(imgRef.current);
-
 		setDetails(myStore.getState().labelDetails);
-
 		myStore.subscribe(() => {
 			let newLableDetails = myStore.getState().labelDetails;
 			setDetails([...newLableDetails]);
@@ -153,49 +149,12 @@ export function Part1() {
 	useEffect(() => {
 		let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null;
 		if (path && isShow) {
-			let imageIds = path;
-			let stack = {
-				currentImageIdIndex: 0,
-				imageIds,
-			};
-			cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
-				cornerstone.displayImage(imgRef.current, img);
-				cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
-				cornerstoneTools.addToolState(imgRef.current, "stack", stack);
-			});
 			setPatientInfo(JSON.parse(sessionStorage.getItem("PATIENT_INFO")));
-			setData(JSON.parse(sessionStorage.getItem("FILE_PATH")));
 		}
 	}, [isShow]);
 
 	function chooseTool(name) {
 		return () => {
-			//修改前
-			// for (let i = 0; i < mouseToolChain.length; i++) {
-			//   if (mouseToolChain[i].name === name) {
-			//     cornerstoneTools.addToolForElement(
-			//       imgRef.current,
-			//       mouseToolChain[i].func
-			//     );
-			//     cornerstoneTools.setToolActiveForElement(
-			//       imgRef.current,
-			//       mouseToolChain[i].name, {
-			//       mouseButtonMask: 1,
-			//     });
-			//   } else {
-			//     cornerstoneTools.addToolForElement(
-			//       imgRef.current,
-			//       mouseToolChain[i].func
-			//     );
-			//     cornerstoneTools.setToolPassiveForElement(
-			//       imgRef.current,
-			//       mouseToolChain[i].name, {
-			//       mouseButtonMask: 1,
-			//     });
-			//   }
-			// }
-
-			//新
 			const tool = name;
 			if (!tool) return;
 			if (prevToolName) {
@@ -228,17 +187,31 @@ export function Part1() {
 	function uploadFiles() {
 		fileRef.current.click();
 	}
-
+	let imageIds = [];
 	async function loadFiles(e) {
 		let files = e.target.files;
 		let formdata = new FormData();
 		let demoData = new FormData();
-		for (let i = 0; i < files.length; i++) {
-			formdata.append("file", files[i]);
-		}
+		//本地读取文件 并且=显示
+		Array.from(files).forEach((file) => {
+			const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+			imageIds.push(imageId);
+			async function loadImage() {
+				const image = await cornerstone.loadImage(imageIds[0]);
+				cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
+				const stack = {
+					currentImageIdIndex: 0,
+					imageIds,
+				};
+				// 为启用元素添加 stack 工具状态
+				cornerstoneTools.addToolState(imgRef.current, "stack", stack);
+				cornerstone.displayImage(imgRef.current, image);
+			}
+			loadImage()
+		});
+
 		demoData.append("file", files[0]);
-		// console.log(formdata.getAll("file"));
-		uploadFile(formdata);
+		//uploadFile(formdata);
 
 		let fileInfo = await getFileInfo(demoData);
 		// console.log(fileInfo);
@@ -253,7 +226,6 @@ export function Part1() {
 		sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
 		sessionStorage.setItem("PATIENT_INFO", JSON.stringify(patientInfo));
 		setIsShow(true);
-		setData(filePaths);
 	}
 
 	const handleMouseMove = (e) => {
