@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-
 import {
 	cornerstone,
-	// dicomParser,
-	// cornerstoneWADOImageLoader,
+	dicomParser,
+	cornerstoneWADOImageLoader,
 	cornerstoneTools,
 } from "../../../util/js/cornerstone";
 
@@ -24,6 +23,8 @@ import Header from "../Header/Header";
 import Item from "./Item/Item";
 import Detail from "./Detail/Detail";
 import "./Part1.scss";
+import { message } from "antd";
+import { BasicFunBtn } from "../../../components";
 
 const mouseToolChain = [
 	{
@@ -89,10 +90,13 @@ export function Part1() {
 	const imgRef = useRef(null);
 	const picRef = useRef(null);
 	let [viewPort, setViewPort] = useState({});
-	const [patientInfo, setPatientInfo] = useState({});
+	// 四个角显示的信息
+	const [patientInfo, setPatientInfo] = useState({ name: '', id: '', age: '', address: '', modality: '', studyDate: '', accessionNum: 0 });
 	const [isShow, setIsShow] = useState(false);
 	const [details, setDetails] = useState([]);
 	let [data, setData] = useState([]);
+	const [result, setResult] = useState();
+	const [fileImgId, setFileImgId] = useState('');
 	let [obj, setObj] = useState({});
 
 	useEffect(() => {
@@ -230,21 +234,54 @@ export function Part1() {
 	}
 
 	async function loadFiles(e) {
-		let files = e.target.files;
-		let formdata = new FormData();
-		let demoData = new FormData();
-		for (let i = 0; i < files.length; i++) {
-			formdata.append("file", files[i]);
+		message.loading('上传中...');
+		const files = e.target.files;
+		const formdata = new FormData();
+		const demoData = new FormData();
+		const imageIds = [];
+		for (let i = 1; i < files.length; i++) {
+			formdata.append("file", files[i - 1]);
+			const file = files[i];
+			const read = new FileReader();
+			imageIds[i - 1] = "";
+			read.readAsArrayBuffer(file);
+			read.onload = function () {
+				const resu = dicomParser.parseDicom(new Uint8Array(this.result));
+				const url = "http://" + file.name;
+				const fileImgId = "wadouri:" + url;
+				setResult(resu);
+				setFileImgId(fileImgId);
+				imageIds[i - 1] = fileImgId;
+				//设置映射关系
+				cornerstoneWADOImageLoader.wadouri.dataSetCacheManager.add(url, resu);
+				cornerstone.imageCache.putImageLoadObject(
+					fileImgId,
+					cornerstoneWADOImageLoader.wadouri.loadImageFromPromise(
+						new Promise((res) => {
+							res(resu);
+						}),
+						fileImgId
+					)
+				);
+				const stack = {
+					currentImageIdIndex: 0,
+					imageIds,
+				};
+				//加载dcm文件并缓存
+				cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
+					cornerstone.displayImage(imgRef.current, img);
+					cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
+					cornerstoneTools.addToolState(imgRef.current, "stack", stack);
+				});
+			};
 		}
 		demoData.append("file", files[0]);
 		// console.log(formdata.getAll("file"));
 		uploadFile(formdata);
 
 		let fileInfo = await getFileInfo(demoData);
-		// console.log(fileInfo);
 		//此处
 		let patientInfo = { ...fileInfo.data };
-		// console.log(patientInfo)
 		//添加文件id
 		let filePaths = [];
 		for (let i = 1; i <= files.length; i++) {
@@ -282,7 +319,6 @@ export function Part1() {
 		if (Object.getOwnPropertyNames(details).length == 0) {
 			return;
 		}
-
 		let title = [
 			"PatientID",
 			"PatientName",
@@ -296,11 +332,9 @@ export function Part1() {
 			"Length",
 			"Points",
 		];
-
 		//填充基本信息和类型
 		let str = [];
 		str.push(title.join(",") + "\r\n");
-
 		for (let i = 0; i < details.length; i++) {
 			let arr = new Array(title.length).fill("");
 			for (let j = 0; j < title.length; j++) {
@@ -321,7 +355,6 @@ export function Part1() {
 			}
 			str.push(arr.join(",") + "\r\n");
 		}
-
 		const blob = new Blob(["\uFEFF" + str.join("")], {
 			type: "test/csv;charset=utf-8",
 		});
@@ -336,72 +369,23 @@ export function Part1() {
 	};
 	//导出文件具体方法
 
+	const { name, id, age, address, modality, studyDate, accessionNum } = patientInfo;
 	return (
 		<div className="Part1">
 			<Header />
 			<div className="toolBar">
-				<button
-					className="singleTool"
-					onClick={chooseTool("StackScrollMouseWheel")}
-				>
-					<span className="iconfont toolIcons">&#xe6f6;</span>
-					<div className="txt">滚动切片</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("Wwwc")}>
-					<span className="iconfont toolIcons">&#xe635;</span>
-					<div className="txt">窗宽/窗位</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("ZoomMouseWheel")}>
-					<span className="iconfont toolIcons">&#xe7ca;</span>
-					<div className="txt">缩放</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("Magnify")}>
-					<span className="iconfont toolIcons">&#xe662;</span>
-					<div className="txt">放大镜</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("Pan")}>
-					<span className="iconfont toolIcons">&#xeb70;</span>
-					<div className="txt">移动</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("Angle")}>
-					<span className="iconfont toolIcons">&#xe631;</span>
-					<div className="txt">角度测量</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("Length")}>
-					<span className="iconfont toolIcons">&#xedda;</span>
-					<div className="txt">长度测量</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("Eraser")}>
-					<span className="iconfont toolIcons">&#xe606;</span>
-					<div className="txt">橡皮擦</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("CircleRoi")}>
-					<span className="iconfont toolIcons">&#xe61b;</span>
-					<div className="txt">圆形标注</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("RectangleRoi")}>
-					<span className="iconfont toolIcons">&#xe604;</span>
-					<div className="txt">矩形标注</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("FreehandRoi")}>
-					<span className="iconfont toolIcons">&#xe6ec;</span>
-					<div className="txt">自由标注</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("Brush")}>
-					<span className="iconfont toolIcons">&#xe670;</span>
-					<div className="txt">画笔工具</div>
-				</button>
+				<BasicFunBtn title='滚动切片' iconCode='&#xe6f6;' onClick={chooseTool("StackScrollMouseWheel")} />
+				<BasicFunBtn title='窗宽/窗位' iconCode='&#xe635;' onClick={chooseTool("Wwwc")} />
+				<BasicFunBtn title='缩放' iconCode='&#xe7ca;' onClick={chooseTool("ZoomMouseWheel")} />
+				<BasicFunBtn title='放大镜' iconCode='&#xe662;' onClick={chooseTool("Magnify")} />
+				<BasicFunBtn title='移动' iconCode='&#xeb70;' onClick={chooseTool("Pan")} />
+				<BasicFunBtn title='角度测量' iconCode='&#xe631;' onClick={chooseTool("Angle")} />
+				<BasicFunBtn title='长度测量' iconCode='&#xedda;' onClick={chooseTool("Length")} />
+				<BasicFunBtn title='橡皮擦' iconCode='&#xe606;' onClick={chooseTool("Eraser")} />
+				<BasicFunBtn title='圆形标注' iconCode='&#xe61b;' onClick={chooseTool("CircleRoi")} />
+				<BasicFunBtn title='矩形标注' iconCode='&#xe604;' onClick={chooseTool("RectangleRoi")} />
+				<BasicFunBtn title='自由标注' iconCode='&#xe6ec;' onClick={chooseTool("FreehandRoi")} />
+				<BasicFunBtn title='画笔工具' iconCode='&#xe670;' onClick={chooseTool("Brush")} />
 
 				<button className="uploadTool" onClick={uploadFiles}>
 					<div className="txt">上传影像</div>
@@ -461,23 +445,19 @@ export function Part1() {
 						<div className="PatientInfo">
 							<p>
 								Patient Name :{" "}
-								{patientInfo.PatientName
-									? patientInfo.PatientName
-									: "undefined"}
+								{name}
 							</p>
 							<p>
 								Patient ID :{" "}
-								{patientInfo.PatientID ? patientInfo.PatientID : "undefined"}
+								{id}
 							</p>
 							<p>
 								Patinet Age :{" "}
-								{patientInfo.PatientAge ? patientInfo.PatientAge : "undefined"}
+								{age}
 							</p>
 							<p>
 								Patinet Address :{" "}
-								{patientInfo.PatientAddress
-									? patientInfo.PatientAddress
-									: "undefined"}
+								{address}
 							</p>
 						</div>
 					) : null}
@@ -485,17 +465,15 @@ export function Part1() {
 						<div className="study">
 							<p>
 								Modality :{" "}
-								{patientInfo.Modality ? patientInfo.Modality : "undefined"}
+								{modality}
 							</p>
 							<p>
 								Study Date :{" "}
-								{patientInfo.StudyDate ? patientInfo.StudyDate : "undefined"}
+								{studyDate}
 							</p>
 							<p>
 								Accession Number :{" "}
-								{patientInfo.AccessionNumber
-									? patientInfo.AccessionNumber
-									: "undefined"}
+								{accessionNum}
 							</p>
 						</div>
 					) : null}

@@ -144,19 +144,19 @@ export function Part2Test() {
 	}
 	// 剪裁图片
 	/* function ScissorPic() {
-    // const data = { left: 10, top: 20, width: "20px", height: "20px" };
-    // // cancelDrawin
-    const ele = document.getElementById("test");
-    let viewport = cornerstone.getViewport(ele);
+		// const data = { left: 10, top: 20, width: "20px", height: "20px" };
+		// // cancelDrawin
+		const ele = document.getElementById("test");
+		let viewport = cornerstone.getViewport(ele);
 
-    // cornerstoneTools.clipBoundingBox(imgRef.current , 20, 20);
-    // // cornerstoneTools.playClip(imgRef.current, 30)
-    // // cornerstone.copyPoints(imgRef.current);
-    console.log("eeee");
-    // viewport.voi.windowWidth = 90;
-    // viewport.voi.windowCenter = 30;
-    // cornerstone.setViewport(imgRef.current, viewport);
-  } */
+		// cornerstoneTools.clipBoundingBox(imgRef.current , 20, 20);
+		// // cornerstoneTools.playClip(imgRef.current, 30)
+		// // cornerstone.copyPoints(imgRef.current);
+		console.log("eeee");
+		// viewport.voi.windowWidth = 90;
+		// viewport.voi.windowCenter = 30;
+		// cornerstone.setViewport(imgRef.current, viewport);
+	} */
 	function LimpidPic() {
 		// 拿到当前的canvas组件
 		const canvas = document.getElementsByClassName("cornerstone-canvas")[0];
