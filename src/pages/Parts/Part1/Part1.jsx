@@ -99,16 +99,9 @@ export function Part1() {
 	// 看意思是存储右侧信息
 	const [details, setDetails] = useState([]);
 
-	const [data, setData] = useState([]);
-	const [result, setResult] = useState();
-	const [fileImgId, setFileImgId] = useState('');
-	const [obj, setObj] = useState({});
-
 	useEffect(() => {
 		cornerstone.enable(imgRef.current);
-
 		setDetails(myStore.getState().labelDetails);
-
 		myStore.subscribe(() => {
 			let newLableDetails = myStore.getState().labelDetails;
 			setDetails([...newLableDetails]);
@@ -172,50 +165,13 @@ export function Part1() {
 
 	useEffect(() => {
 		let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null;
-		if (path && isUploadFile) {
-			let imageIds = path;
-			let stack = {
-				currentImageIdIndex: 0,
-				imageIds,
-			};
-			cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
-				cornerstone.displayImage(imgRef.current, img);
-				cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
-				cornerstoneTools.addToolState(imgRef.current, "stack", stack);
-			});
+		if (path && isShow) {
 			setPatientInfo(JSON.parse(sessionStorage.getItem("PATIENT_INFO")));
-			setData(JSON.parse(sessionStorage.getItem("FILE_PATH")));
 		}
 	}, [isUploadFile]);
 
 	function chooseTool(name) {
 		return () => {
-			//修改前
-			// for (let i = 0; i < mouseToolChain.length; i++) {
-			//   if (mouseToolChain[i].name === name) {
-			//     cornerstoneTools.addToolForElement(
-			//       imgRef.current,
-			//       mouseToolChain[i].func
-			//     );
-			//     cornerstoneTools.setToolActiveForElement(
-			//       imgRef.current,
-			//       mouseToolChain[i].name, {
-			//       mouseButtonMask: 1,
-			//     });
-			//   } else {
-			//     cornerstoneTools.addToolForElement(
-			//       imgRef.current,
-			//       mouseToolChain[i].func
-			//     );
-			//     cornerstoneTools.setToolPassiveForElement(
-			//       imgRef.current,
-			//       mouseToolChain[i].name, {
-			//       mouseButtonMask: 1,
-			//     });
-			//   }
-			// }
-
-			//新
 			const tool = name;
 			if (!tool) return;
 			if (prevToolName) {
@@ -248,85 +204,32 @@ export function Part1() {
 	function uploadFiles() {
 		fileRef.current.click();
 	}
-
-	// async function loadFiles(e) {
-	// 	message.loading('上传中...');
-	// 	const files = e.target.files;
-	// 	console.log('files', files)
-	// 	const formdata = new FormData();
-	// 	const demoData = new FormData();
-	// 	const imageIds = [];
-	// 	for (let i = 1; i < files.length; i++) {
-	// 		formdata.append("file", files[i - 1]);
-	// 		const file = files[i];
-	// 		const read = new FileReader();
-	// 		imageIds[i - 1] = "";
-	// 		read.readAsArrayBuffer(file);
-	// 		read.onload = function () {
-	// 			const resu = dicomParser.parseDicom(new Uint8Array(this.result));
-	// 			const url = "http://" + file.name;
-	// 			const fileImgId = "wadouri:" + url;
-	// 			setResult(resu);
-	// 			setFileImgId(fileImgId);
-	// 			imageIds[i - 1] = fileImgId;
-	// 			//设置映射关系
-	// 			cornerstoneWADOImageLoader.wadouri.dataSetCacheManager.add(url, resu);
-	// 			cornerstone.imageCache.putImageLoadObject(
-	// 				fileImgId,
-	// 				cornerstoneWADOImageLoader.wadouri.loadImageFromPromise(
-	// 					new Promise((res) => {
-	// 						res(resu);
-	// 					}),
-	// 					fileImgId
-	// 				)
-	// 			);
-	// 			const stack = {
-	// 				currentImageIdIndex: 0,
-	// 				imageIds,
-	// 			};
-	// 			//加载dcm文件并缓存
-	// 			cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
-	// 				cornerstone.displayImage(imgRef.current, img);
-	// 				cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
-	// 				cornerstoneTools.addToolState(imgRef.current, "stack", stack);
-	// 			});
-	// 		};
-	// 	}
-	// 	demoData.append("file", files[0]);
-	// 	// console.log(formdata.getAll("file"));
-	// 	uploadFile(formdata);
-
-	// 	let fileInfo = await getFileInfo(demoData);
-	// 	//此处
-	// 	let patientInfo = { ...fileInfo.data };
-	// 	//添加文件id
-	// 	let filePaths = [];
-	// 	for (let i = 1; i <= files.length; i++) {
-	// 		filePaths.push(getImageId(patientInfo.SeriesInstanceUID, i));
-	// 	}
-	// 	sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
-	// 	sessionStorage.setItem("PATIENT_INFO", JSON.stringify(patientInfo));
-	// 	setIsUploadFile(true);
-	// 	setData(filePaths);
-	// }
-
+	let imageIds = [];
 	async function loadFiles(e) {
 		message.loading('上传中');
 		let files = e.target.files;
 		let formdata = new FormData();
 		let demoData = new FormData();
-		for (let i = 0; i < files.length; i++) {
-			formdata.append("file", files[i]);
-		}
+		//本地读取文件 并且=显示
+		Array.from(files).forEach((file) => {
+			const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+			imageIds.push(imageId);
+			async function loadImage() {
+				const image = await cornerstone.loadImage(imageIds[0]);
+				cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
+				const stack = {
+					currentImageIdIndex: 0,
+					imageIds,
+				};
+				// 为启用元素添加 stack 工具状态
+				cornerstoneTools.addToolState(imgRef.current, "stack", stack);
+				cornerstone.displayImage(imgRef.current, image);
+			}
+			loadImage()
+		});
+
 		demoData.append("file", files[0]);
-		// console.log(formdata.getAll("file"));
-		uploadFile(formdata);
-		// const res = await axios.post('http://127.0.0.1:4523/m1/3019322-0-default/file/uploadDicomFile', formdata, {
-		// 	headers: {
-		// 		"Content-Type": "multipart/form-data"
-		// 	}
-		// });
-		// console.log('res', res)
+		//uploadFile(formdata);
 
 		let fileInfo = await getFileInfo(demoData);
 		//此处
@@ -338,8 +241,7 @@ export function Part1() {
 		// }
 		sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
 		sessionStorage.setItem("PATIENT_INFO", JSON.stringify(patientInfo));
-		setIsUploadFile(true);
-		setData(filePaths);
+		setIsShow(true);
 	}
 
 	const handleMouseMove = (e) => {

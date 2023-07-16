@@ -65,40 +65,7 @@ export function Part2Test() {
 	let fileImgId = ""; // 当前选中的 DCM文件 imageId
 	let imageIds = [];
 
-	//   判断是需要哪一个工具
 	function chooseTool(name) {
-		return () => {
-			for (let i = 0; i < mouseToolChain.length; i++) {
-				if (mouseToolChain[i].name === name) {
-					cornerstoneTools.addToolForElement(
-						imgRef.current,
-						mouseToolChain[i].func
-					);
-					cornerstoneTools.setToolActiveForElement(
-						imgRef.current,
-						mouseToolChain[i].name,
-						{
-							mouseButtonMask: 1,
-						}
-					);
-				} else {
-					cornerstoneTools.addToolForElement(
-						imgRef.current,
-						mouseToolChain[i].func
-					);
-					cornerstoneTools.setToolPassiveForElement(
-						imgRef.current,
-						mouseToolChain[i].name,
-						{
-							mouseButtonMask: 1,
-						}
-					);
-				}
-			}
-		};
-	}
-
-	function chooseTool1(name) {
 		return () => {
 			const tool = name;
 			if (!tool) return;
@@ -141,57 +108,6 @@ export function Part2Test() {
 		cornerstone.setViewport(imgRef.current, {
 			hflip: upLr,
 		});
-	}
-	// 剪裁图片
-	/* function ScissorPic() {
-		// const data = { left: 10, top: 20, width: "20px", height: "20px" };
-		// // cancelDrawin
-		const ele = document.getElementById("test");
-		let viewport = cornerstone.getViewport(ele);
-
-		// cornerstoneTools.clipBoundingBox(imgRef.current , 20, 20);
-		// // cornerstoneTools.playClip(imgRef.current, 30)
-		// // cornerstone.copyPoints(imgRef.current);
-		console.log("eeee");
-		// viewport.voi.windowWidth = 90;
-		// viewport.voi.windowCenter = 30;
-		// cornerstone.setViewport(imgRef.current, viewport);
-	} */
-	function LimpidPic() {
-		// 拿到当前的canvas组件
-		const canvas = document.getElementsByClassName("cornerstone-canvas")[0];
-		const ctx = canvas.getContext("2d");
-
-		// 获取图片像素信息
-		const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-		let data = imageData.data;
-
-		// 获取一行的间隔为space，让一个像素点的数据间隔为4（是rgba颜色值）
-		const space = imageData.width * 4;
-		console.log(space, "...", data.length);
-		// const singleSpace = 4;
-		for (let i = space; i < data.length - space; i += 4) {
-			// 直接跳过边界
-			if (i % space === 0 || (i + 4) % space === 0) {
-				continue;
-			} else {
-				const singleData =
-					data[i - space] +
-					data[i - space + 4] +
-					data[i - space - 4] +
-					data[i] +
-					data[i + 4] +
-					data[i - 4] +
-					data[i + space] +
-					data[i + space + 4] +
-					data[i + space - 4];
-				const avg = singleData / 9;
-				data[i] = avg;
-				data[i + 1] = avg;
-				data[i + 2] = avg;
-			}
-		}
-		ctx.putImageData(imageData, 0, 0);
 	}
 	//图片降噪
 	function denoiseImage() {
@@ -244,14 +160,15 @@ export function Part2Test() {
 		for (let i = 1; i < files.length; i++) {
 			formdata.append("file", files[i - 1]);
 			let file = files[i];
-			let read = new FileReader();
 			imageIds[i - 1] = "";
+			let read = new FileReader();
 			read.readAsArrayBuffer(file);
 			read.onload = function () {
 				result = dicomParser.parseDicom(new Uint8Array(this.result));
-				let url = "http://" + file.name;
-				fileImgId = "wadouri:" + url;
-				// imageIds.push(fileImgId)
+				/* let url = "http://" + file.name;
+				fileImgId = "wadouri:" + url; */
+				fileImgId = "dicomfile:" + file.name;
+				let url = fileImgId;
 				imageIds[i - 1] = fileImgId;
 				//设置映射关系
 				cornerstoneWADOImageLoader.wadouri.dataSetCacheManager.add(url, result);
@@ -269,6 +186,7 @@ export function Part2Test() {
 					imageIds,
 				};
 				//加载dcm文件并缓存
+				console.log(imageIds);
 				cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
 					cornerstone.displayImage(imgRef.current, img);
 					cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
@@ -537,10 +455,10 @@ export function Part2Test() {
 			// context.stroke()
 			context.closePath();
 		};
-		return { init, cut, cancelCut, clipImgData };
+		return { init, cut };
 	};
 
-	const { init, cut, cancelCut, clipImgData } = clip();
+	const { init, cut } = clip();
 	return (
 		<div className="Part2Test">
 			<Header />
@@ -548,13 +466,13 @@ export function Part2Test() {
 				<div className="left">
 					<button
 						className="singleTool"
-						onClick={chooseTool1("StackScrollMouseWheel")}
+						onClick={chooseTool("StackScrollMouseWheel")}
 					>
 						<span className="iconfont toolIcons">&#xe6f6;</span>
 						<div className="txt">滚动切片</div>
 					</button>
 
-					<button className="singleTool" onClick={chooseTool1("Wwwc")}>
+					<button className="singleTool" onClick={chooseTool("Wwwc")}>
 						<span className="iconfont toolIcons">&#xe635;</span>
 						<div className="txt">图像加强</div>
 					</button>
@@ -576,7 +494,7 @@ export function Part2Test() {
 
 					<button
 						className="singleTool"
-						onClick={chooseTool1("ZoomMouseWheel")}
+						onClick={chooseTool("ZoomMouseWheel")}
 					>
 						<span className="iconfont toolIcons">&#xe631;</span>
 						<div className="txt">图像缩放</div>
