@@ -6,6 +6,8 @@ import {
 	cornerstoneTools,
 } from "../../../util/js/cornerstone";
 
+import mergeToolState from "../../../util/js/mergeToolState";
+
 import {
 	uploadFile,
 	// getInstanceNumbers,
@@ -25,44 +27,41 @@ import Detail from "./Detail/Detail";
 import "./Part1.scss";
 import { message } from "antd";
 import { BasicFunBtn } from "../../../components";
-import axios from "axios";
 
-const mouseToolChain = [
-	{
-		name: "StackScrollMouseWheel",
-		func: cornerstoneTools.StackScrollMouseWheelTool,
-		config: {},
-	},
-	{ name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
-	{
-		name: "ZoomMouseWheel",
-		func: cornerstoneTools.ZoomMouseWheelTool,
-		config: {},
-	},
-	{ name: "Pan", func: cornerstoneTools.PanTool, config: {} },
-	{ name: "Magnify", func: cornerstoneTools.MagnifyTool, config: {} },
-	{ name: "Angle", func: cornerstoneTools.AngleTool, config: {} },
-	{ name: "Length", func: cornerstoneTools.LengthTool, config: {} },
-	{ name: "Eraser", func: cornerstoneTools.EraserTool, config: {} },
-	{
-		name: "CircleScissors",
-		func: cornerstoneTools.CircleScissorsTool,
-		config: {},
-	},
-	{
-		name: "RectangleScissors",
-		func: cornerstoneTools.RectangleScissorsTool,
-		config: {},
-	},
-	{
-		name: "FreehandScissors",
-		func: cornerstoneTools.FreehandScissorsTool,
-		config: {},
-	},
-	{ name: "Brush", func: cornerstoneTools.BrushTool },
-];
-
-const toolState = {};
+// const mouseToolChain = [
+// 	{
+// 		name: "StackScrollMouseWheel",
+// 		func: cornerstoneTools.StackScrollMouseWheelTool,
+// 		config: {},
+// 	},
+// 	{ name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
+// 	{
+// 		name: "ZoomMouseWheel",
+// 		func: cornerstoneTools.ZoomMouseWheelTool,
+// 		config: {},
+// 	},
+// 	{ name: "Pan", func: cornerstoneTools.PanTool, config: {} },
+// 	{ name: "Magnify", func: cornerstoneTools.MagnifyTool, config: {} },
+// 	{ name: "Angle", func: cornerstoneTools.AngleTool, config: {} },
+// 	{ name: "Length", func: cornerstoneTools.LengthTool, config: {} },
+// 	{ name: "Eraser", func: cornerstoneTools.EraserTool, config: {} },
+// 	{
+// 		name: "CircleScissors",
+// 		func: cornerstoneTools.CircleScissorsTool,
+// 		config: {},
+// 	},
+// 	{
+// 		name: "RectangleScissors",
+// 		func: cornerstoneTools.RectangleScissorsTool,
+// 		config: {},
+// 	},
+// 	{
+// 		name: "FreehandScissors",
+// 		func: cornerstoneTools.FreehandScissorsTool,
+// 		config: {},
+// 	},
+// 	{ name: "Brush", func: cornerstoneTools.BrushTool },
+// ];
 
 let activeToolName = ""; // 激活工具名称
 let prevToolName = ""; // 上一个激活工具名称
@@ -89,15 +88,19 @@ export function Part1() {
 	const fileRef = useRef(null);
 	const imgRef = useRef(null);
 	const picRef = useRef(null);
+	const data = sessionStorage.getItem('preToolState');
+	const preToolState = JSON.parse(data !== 'undefined' && data !== 'null' ? data : '{}');
 	const [viewPort, setViewPort] = useState({});
 	// 位置信息
 	const [position, setPosition] = useState({ x: 0, y: 0 });
 	// 四个角显示的信息
-	const [patientInfo, setPatientInfo] = useState({ name: '', id: '', age: '', address: '', modality: '', studyDate: '', accessionNum: 0 });
+	const [patientInfo, setPatientInfo] = useState({ PatientName: '', PatientID: '', PatientAge: '', PatientAddress: '', Modality: '', StudyDate: '', AccessionNumber: 0 });
 	// 是否上传了文件
 	const [isUploadFile, setIsUploadFile] = useState(false);
 	// 看意思是存储右侧信息
 	const [details, setDetails] = useState([]);
+	// 工具的加入与否
+	const [isAddTool, setIsAllTool] = useState({});
 
 	useEffect(() => {
 		cornerstone.enable(imgRef.current);
@@ -152,20 +155,9 @@ export function Part1() {
 		);
 	};
 
-	// useEffect(() => {
-	// 	cornerstone.enable(imgRef.current);
-	// 	const StackScrollMouseWheelTool =
-	// 		cornerstoneTools.StackScrollMouseWheelTool;
-	// 	cornerstoneTools.addTool(StackScrollMouseWheelTool);
-	// 	cornerstoneTools.setToolActive("StackScrollMouseWheel", {});
-	// 	if (location.state) {
-	// 		getPatientDicom(location.state.record);
-	// 	}
-	// }, []);
-
 	useEffect(() => {
 		let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null;
-		if (path && isShow) {
+		if (path && isUploadFile) {
 			setPatientInfo(JSON.parse(sessionStorage.getItem("PATIENT_INFO")));
 		}
 	}, [isUploadFile]);
@@ -184,14 +176,14 @@ export function Part1() {
 				); // 把上一个激活工具冻结
 			}
 			activeToolName = tool + "Tool";
-			if (!toolState[activeToolName]) {
+			if (!isAddTool[activeToolName]) {
 				// 不能重复 addTool
 				cornerstoneTools.addToolForElement(
 					imgRef.current,
 					cornerstoneTools[activeToolName],
 					tool === "TextMarker" ? marker() : {}
 				);
-				toolState[activeToolName] = true;
+				setIsAllTool(e => ({ ...e, [activeToolName]: true }));
 			}
 			prevToolName = tool;
 			// 激活工具
@@ -205,26 +197,31 @@ export function Part1() {
 		fileRef.current.click();
 	}
 	let imageIds = [];
+
+	async function loadImage() {
+		const image = await cornerstone.loadImage(imageIds[0]);
+		cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
+		const stack = {
+			currentImageIdIndex: 0,
+			imageIds,
+		};
+		// 为启用元素添加 stack 工具状态
+		cornerstoneTools.addToolState(imgRef.current, "stack", stack);
+		window.addEventListener('popstate', () => {
+			cornerstone.reset(imgRef.current)
+		})
+		cornerstone.displayImage(imgRef.current, image);
+	}
+
 	async function loadFiles(e) {
 		message.loading('上传中');
 		let files = e.target.files;
 		let formdata = new FormData();
 		let demoData = new FormData();
-		//本地读取文件 并且=显示
+		//本地读取文件 并且显示
 		Array.from(files).forEach((file) => {
 			const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
 			imageIds.push(imageId);
-			async function loadImage() {
-				const image = await cornerstone.loadImage(imageIds[0]);
-				cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
-				const stack = {
-					currentImageIdIndex: 0,
-					imageIds,
-				};
-				// 为启用元素添加 stack 工具状态
-				cornerstoneTools.addToolState(imgRef.current, "stack", stack);
-				cornerstone.displayImage(imgRef.current, image);
-			}
 			loadImage()
 		});
 
@@ -234,14 +231,59 @@ export function Part1() {
 		let fileInfo = await getFileInfo(demoData);
 		//此处
 		let patientInfo = { ...fileInfo.data };
-		const filePaths = ["wadouri:http://8.130.137.118:8080/MedicalSystem/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber?seriesInstanceUID=1.3.6.1.4.1.14519.5.2.1.6279.6001.323541312620128092852212458228&instanceNumber=1"];
+		const filePaths = [];
 		//添加文件id
-		// for (let i = 1; i <= files.length; i++) {
-		// 	filePaths.push(getImageId(patientInfo.SeriesInstanceUID, i));
-		// }
+		for (let i = 1; i <= files.length; i++) {
+			filePaths.push(getImageId(patientInfo.SeriesInstanceUID, i));
+		}
 		sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
 		sessionStorage.setItem("PATIENT_INFO", JSON.stringify(patientInfo));
-		setIsShow(true);
+		setIsUploadFile(true);
+		message.destroy();
+		message.success('上传成功')
+	}
+
+	useEffect(() => {
+		const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
+		const nowToolState = toolStateManager.toolState;
+		// const toolState = { ...nowToolState, ...currentToolState };
+		const toolState = mergeToolState(preToolState, nowToolState);
+		// const toolState = { ...toolStateManager.toolState, ...preToolState };
+		sessionStorage.setItem('preToolState', JSON.stringify(toolState));
+	}, [details])
+
+	async function restoreData() {
+		if (imgRef.current) {
+			if (JSON.stringify(preToolState) === '{}') {
+				return message.info('没有要还原的标注')
+			}
+
+			const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
+			const toolState = preToolState;
+			for (const imageId in toolState) {
+				for (const toolName in toolState[imageId]) {
+					const data = [...toolState[imageId][toolName].data];
+					for (const dataIndex in data) {
+						const activeToolName = toolName + "Tool";
+						if (!isAddTool[activeToolName]) {
+							// 不能重复 addTool
+							cornerstoneTools.addToolForElement(
+								imgRef.current,
+								cornerstoneTools[activeToolName],
+								toolName === "TextMarker" ? marker() : {}
+							);
+							setIsAllTool(e => ({ ...e, [activeToolName]: true }));
+						}
+						toolStateManager.addImageIdToolState(imageId, toolName, data[dataIndex]);
+						cornerstoneTools.setToolActiveForElement(imgRef.current, toolName, {
+							mouseButtonMask: 1,
+						});
+						cornerstoneTools.setToolPassive(toolName);
+					}
+				}
+			}
+			message.success('还原标注成功');
+		}
 	}
 
 	const handleMouseMove = (e) => {
@@ -319,7 +361,7 @@ export function Part1() {
 	};
 	//导出文件具体方法
 
-	const { name, id, age, address, modality, studyDate, accessionNum } = patientInfo;
+	const { AccessionNumber, Modality, PatientAddress, PatientAge, PatientID, PatientName, StudyDate } = patientInfo;
 	return (
 		<div className="Part1">
 			<Header />
@@ -350,7 +392,7 @@ export function Part1() {
 				<button className="saveTool" onClick={() => handleExport()}>
 					<div className="txt">保存标注</div>
 				</button>
-				<button className="rev">还原标注</button>
+				<button className="rev" onClick={() => { restoreData() }}>还原标注</button>
 			</div>
 
 			<div className="p-detail">
@@ -395,19 +437,19 @@ export function Part1() {
 						<div className="PatientInfo">
 							<p>
 								Patient Name :{" "}
-								{name}
+								{PatientName ? PatientName : '未知'}
 							</p>
 							<p>
 								Patient ID :{" "}
-								{id}
+								{PatientID ? PatientID : '未知'}
 							</p>
 							<p>
 								Patinet Age :{" "}
-								{age}
+								{PatientAge ? PatientAge : '未知'}
 							</p>
 							<p>
 								Patinet Address :{" "}
-								{address}
+								{PatientAddress ? PatientAddress : '未知'}
 							</p>
 						</div>
 					) : null}
@@ -415,15 +457,15 @@ export function Part1() {
 						<div className="study">
 							<p>
 								Modality :{" "}
-								{modality}
+								{Modality ? Modality : '未知'}
 							</p>
 							<p>
 								Study Date :{" "}
-								{studyDate}
+								{StudyDate ? StudyDate : '未知'}
 							</p>
 							<p>
 								Accession Number :{" "}
-								{accessionNum}
+								{AccessionNumber ? AccessionNumber : '未知'}
 							</p>
 						</div>
 					) : null}

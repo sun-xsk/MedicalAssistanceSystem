@@ -186,7 +186,6 @@ export function Part2Test() {
 					imageIds,
 				};
 				//加载dcm文件并缓存
-				console.log(imageIds);
 				cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
 					cornerstone.displayImage(imgRef.current, img);
 					cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
