@@ -207,9 +207,6 @@ export function Part1() {
 		};
 		// 为启用元素添加 stack 工具状态
 		cornerstoneTools.addToolState(imgRef.current, "stack", stack);
-		window.addEventListener('popstate', () => {
-			cornerstone.reset(imgRef.current)
-		})
 		cornerstone.displayImage(imgRef.current, image);
 	}
 
