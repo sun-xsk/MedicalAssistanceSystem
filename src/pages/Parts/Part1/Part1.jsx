@@ -27,6 +27,7 @@ import Detail from "./Detail/Detail";
 import "./Part1.scss";
 import { message } from "antd";
 import { BasicFunBtn } from "../../../components";
+import axios from 'axios'
 
 // const mouseToolChain = [
 // 	{
@@ -101,6 +102,8 @@ export function Part1() {
 	const [details, setDetails] = useState([]);
 	// 工具的加入与否
 	const [isAddTool, setIsAllTool] = useState({});
+	// 记录seriesInstanceUID
+	const [seriesInstanceUID, setSeriesInstanceUID] = useState('');
 
 	useEffect(() => {
 		cornerstone.enable(imgRef.current);
@@ -155,12 +158,12 @@ export function Part1() {
 		);
 	};
 
-	useEffect(() => {
-		let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null;
-		if (path && isUploadFile) {
-			setPatientInfo(JSON.parse(sessionStorage.getItem("PATIENT_INFO")));
-		}
-	}, [isUploadFile]);
+	// useEffect(() => {
+	// 	let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null;
+	// 	if (path && isUploadFile) {
+	// 		setPatientInfo(JSON.parse(sessionStorage.getItem("PATIENT_INFO")));
+	// 	}
+	// }, [isUploadFile]);
 
 	function chooseTool(name) {
 		return () => {
@@ -212,29 +215,38 @@ export function Part1() {
 
 	async function loadFiles(e) {
 		message.loading('上传中');
-		let files = e.target.files;
-		let formdata = new FormData();
-		let demoData = new FormData();
+		const files = e.target.files;
+		const formdata = new FormData();
 		//本地读取文件 并且显示
 		Array.from(files).forEach((file) => {
+			formdata.append('file', file);
 			const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
 			imageIds.push(imageId);
 			loadImage()
 		});
 
-		demoData.append("file", files[0]);
 		//uploadFile(formdata);
+		const res = (await axios.post('https://mock.apifox.cn/m1/3019322-0-default/file/upload')).data;
+		const seriesInstanceUID = res.status === 200 ? res.data[0].seriesInstanceUID : '';
+		setSeriesInstanceUID(seriesInstanceUID);
+		const resFileINFO = (await axios.get(`http://127.0.0.1:4523/m1/3019322-0-default/file/getSeriesInfo?seriesInstanceUID=${seriesInstanceUID}`)).data;
+		const { accessionNumber, modality, patientAge, patientId, patientName, patientSex, studyDate } = resFileINFO.status === 200 ? resFileINFO.data : {};
+		setPatientInfo({
+			AccessionNumber: accessionNumber,
+			PatientName: patientName,
+			PatientSex: patientSex,
+			Modality: modality,
+			PatientAge: patientAge,
+			PatientID: patientId,
+			StudyDate: studyDate
+		});
 
-		let fileInfo = await getFileInfo(demoData);
-		//此处
-		let patientInfo = { ...fileInfo.data };
 		const filePaths = [];
 		//添加文件id
 		for (let i = 1; i <= files.length; i++) {
 			filePaths.push(getImageId(patientInfo.SeriesInstanceUID, i));
 		}
 		sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
-		sessionStorage.setItem("PATIENT_INFO", JSON.stringify(patientInfo));
 		setIsUploadFile(true);
 		message.destroy();
 		message.success('上传成功')
@@ -248,6 +260,25 @@ export function Part1() {
 		// const toolState = { ...toolStateManager.toolState, ...preToolState };
 		sessionStorage.setItem('preToolState', JSON.stringify(toolState));
 	}, [details])
+
+	async function saveAnnotation() {
+		const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
+		const nowToolState = toolStateManager.toolState;
+		if (JSON.stringify(nowToolState) === '{}') {
+			return message.info('当前没有批注');
+		}
+		const label = JSON.stringify(nowToolState);
+		const res = (await axios.post('https://mock.apifox.cn/m1/3019322-0-default/label/save', {
+			seriesInstanceUID,
+			label
+		})).data;
+		// if (res.status === 200) {
+		// 	message.success('已保存当前标记');
+		// } else {
+		// 	message.info('未知错误');
+		// }
+		message.success('保存成功')
+	}
 
 	async function restoreData() {
 		if (imgRef.current) {
@@ -386,7 +417,7 @@ export function Part1() {
 						ref={fileRef}
 					/>
 				</button>
-				<button className="saveTool" onClick={() => handleExport()}>
+				<button className="saveTool" onClick={() => saveAnnotation()}>
 					<div className="txt">保存标注</div>
 				</button>
 				<button className="rev" onClick={() => { restoreData() }}>还原标注</button>
