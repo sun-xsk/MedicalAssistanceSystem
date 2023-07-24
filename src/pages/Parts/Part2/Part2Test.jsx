@@ -228,7 +228,7 @@ export function Part2Test() {
 		//获取文件名
 		const dcmName = dcmData.image.imageId;
 		const match = dcmName.match(/(?<=wadouri:http:\/\/)\d-\d{3}/);
-		const newName = match[0];
+		const newName = match ? match[0] : 'filename';
 		const dcmCanvas = document.getElementsByClassName("cornerstone-canvas")[0];
 		const a = document.createElement("a");
 		a.href = dcmCanvas.toDataURL("image/png");

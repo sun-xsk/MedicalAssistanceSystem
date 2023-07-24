@@ -2,10 +2,7 @@ import axios from "axios";
 import { message } from "antd";
 
 const instance = axios.create({
-  // baseURL: "68.112.100:50000/MedicalSystem",
-  // baseURL: "http://43.142.168.114:8001/MedicalSystem",
-  baseURL: "/MedicalSystem",
-  // baseURL: 'https://mock.apifox.cn/m1/3019322-0-default',
+  baseURL: "/api",
   withCredentials: true,
   timeout: 100000,
 });
@@ -65,7 +62,6 @@ instance.interceptors.response.use(
     return res.data;
   },
   (err) => {
-    console.log(err);
     handleNetError(err.response.status);
     Promise.reject(err.response);
   }

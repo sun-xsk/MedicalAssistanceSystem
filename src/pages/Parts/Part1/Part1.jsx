@@ -90,6 +90,7 @@ export function Part1() {
 	const imgRef = useRef(null);
 	const picRef = useRef(null);
 	const data = sessionStorage.getItem('preToolState');
+	const [messageApi, contextHolder] = message.useMessage();
 	const preToolState = JSON.parse(data !== 'undefined' && data !== 'null' ? data : '{}');
 	const [viewPort, setViewPort] = useState({});
 	// 位置信息
@@ -150,7 +151,7 @@ export function Part1() {
 	//   console.log(details);
 	// }, [details])
 
-	let getImageId = (seriesInstanceUID, instanceNumber) => {
+	const getImageId = (seriesInstanceUID, instanceNumber) => {
 		return (
 			"wadouri:" +
 			"http://8.130.137.118:8080/MedicalSystem/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber?" +
@@ -214,43 +215,48 @@ export function Part1() {
 	}
 
 	async function loadFiles(e) {
-		message.loading('上传中');
 		const files = e.target.files;
 		const formdata = new FormData();
-		//本地读取文件 并且显示
-		Array.from(files).forEach((file) => {
-			formdata.append('file', file);
-			const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
-			imageIds.push(imageId);
-			loadImage()
-		});
 
-		//uploadFile(formdata);
-		const res = (await axios.post('https://mock.apifox.cn/m1/3019322-0-default/file/upload')).data;
-		const seriesInstanceUID = res.status === 200 ? res.data[0].seriesInstanceUID : '';
-		setSeriesInstanceUID(seriesInstanceUID);
-		const resFileINFO = (await axios.get(`http://127.0.0.1:4523/m1/3019322-0-default/file/getSeriesInfo?seriesInstanceUID=${seriesInstanceUID}`)).data;
-		const { accessionNumber, modality, patientAge, patientId, patientName, patientSex, studyDate } = resFileINFO.status === 200 ? resFileINFO.data : {};
-		setPatientInfo({
-			AccessionNumber: accessionNumber,
-			PatientName: patientName,
-			PatientSex: patientSex,
-			Modality: modality,
-			PatientAge: patientAge,
-			PatientID: patientId,
-			StudyDate: studyDate
-		});
+		messageApi.open({ key: 'updatable', type: 'loading', content: '上传中', duration: 0 });
+		const res = await uploadFile(formdata);
+		if (res && res.status === 200) {
+			messageApi.open({ key: 'updatable', type: 'success', content: '上传中' });
+			//本地读取文件 并且显示
+			Array.from(files).forEach((file) => {
+				formdata.append('file', file);
+				const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+				imageIds.push(imageId);
+				loadImage()
+			});
 
-		const filePaths = [];
-		//添加文件id
-		for (let i = 1; i <= files.length; i++) {
-			filePaths.push(getImageId(patientInfo.SeriesInstanceUID, i));
+			const seriesInstanceUID = res.data[0].seriesInstanceUID;
+			setSeriesInstanceUID(seriesInstanceUID);
+			const resFileINFO = (await axios.get(`https://mock.apifox.cn/m1/3019322-0-default/file/getSeriesInfo?seriesInstanceUID=${seriesInstanceUID}`)).data;
+			const { accessionNumber, modality, patientAge, patientId, patientName, patientSex, studyDate } = resFileINFO.status === 200 ? resFileINFO.data : {};
+			setPatientInfo({
+				AccessionNumber: accessionNumber,
+				PatientName: patientName,
+				PatientSex: patientSex,
+				Modality: modality,
+				PatientAge: patientAge,
+				PatientID: patientId,
+				StudyDate: studyDate
+			});
+
+			const filePaths = [];
+			//添加文件id
+			for (let i = 1; i <= files.length; i++) {
+				filePaths.push(getImageId(patientInfo.SeriesInstanceUID, i));
+			}
+			sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
+			setIsUploadFile(true);
+		} else {
+			messageApi.open({ key: 'updatable', type: 'error', content: '上传失败' });
 		}
-		sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
-		setIsUploadFile(true);
-		message.destroy();
-		message.success('上传成功')
 	}
+
+
 
 	useEffect(() => {
 		const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
@@ -392,6 +398,7 @@ export function Part1() {
 	const { AccessionNumber, Modality, PatientAddress, PatientAge, PatientID, PatientName, StudyDate } = patientInfo;
 	return (
 		<div className="Part1">
+			{contextHolder}
 			<Header />
 			<div className="toolBar">
 				<BasicFunBtn title='滚动切片' iconCode='&#xe6f6;' onClick={chooseTool("StackScrollMouseWheel")} />

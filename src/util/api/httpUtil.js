@@ -3,8 +3,13 @@ import { Get, Post } from "./httpReq";
 export const testConnect = () => Get("/file/testConnect", "");
 
 //上传文件  参数dicom文件
-export const uploadFile = (filedata) =>
+export const uploadDicomFile = (filedata) =>
 	Post("/file/uploadDicomFile", filedata, "", {
+		"Content-Type": "multipart/form-data",
+	});
+
+export const uploadFile = (filedata) =>
+	Post("/file/upload", filedata, "", {
 		"Content-Type": "multipart/form-data",
 	});
 
