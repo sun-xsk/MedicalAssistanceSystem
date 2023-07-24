@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react'
 import myStore from '../../../../util/store/store'
-import { setLabelName,deleteLabeltoState } from '../../../../util/store/store'
+import { setLabelName, deleteLabeltoState } from '../../../../util/store/store'
 import './Detail.scss'
 
 
@@ -36,7 +36,7 @@ export default function Detail(props) {
             }
         })
 
-        setName(myStore.getState().labelDetails[index].tagName)
+        setName(myStore.getState().labelDetails[index]?.tagName)
 
         nameButtonRef.current.addEventListener('click', (e) => {
             e.preventDefault()
@@ -47,9 +47,9 @@ export default function Detail(props) {
             alert("保存成功")
         })
 
-        deleteButtonRef.current.addEventListener('click',(e)=>{
+        deleteButtonRef.current.addEventListener('click', (e) => {
             e.preventDefault()
-            myStore.dispatch(deleteLabeltoState(indexRef.current.innerText-1))
+            myStore.dispatch(deleteLabeltoState(indexRef.current.innerText - 1))
             alert("删除成功")
         })
 
@@ -233,7 +233,4 @@ export default function Detail(props) {
                 </div>
             )
     }
-
-
-
 }
