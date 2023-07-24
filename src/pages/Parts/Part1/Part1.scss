@@ -46,34 +46,6 @@
     border-bottom: #106f8f solid 1px;
     @include flexBox(flex-start);
 
-    //   设置单个功能样式
-    .singleTool {
-      border: 0;
-      height: 60%;
-      width: 70px;
-      margin-left: 15px;
-      color: #00a4d9;
-      transition: 0.4s;
-      background-color: #000000;
-      @include flexBox(center);
-      flex-direction: column;
-
-      .txt {
-        margin-top: 5px;
-        font-size: 14px;
-      }
-    }
-
-    .singleTool:first-child {
-      margin-left: 20px;
-    }
-
-    .singleTool:hover {
-      color: rgba(203, 201, 196, 0.6);
-    }
-
-
-
     .uploadTool {
       cursor: pointer;
       position: absolute;
@@ -265,8 +237,5 @@
       }
     }
 
-    .toolIcons {
-      font-size: 30px;
-    }
   }
 }

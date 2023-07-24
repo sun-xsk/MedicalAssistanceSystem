@@ -1,10 +1,10 @@
-function getImagePixelModule(dataSet) {
+export function getImagePixelModule(dataSet) {
     var imagePixelModule = {
         samplesPerPixel: dataSet.uint16('x00280002'),
         photometricInterpretation: dataSet.string('x00280004'),
         rows: dataSet.uint16('x00280010'),
         columns: dataSet.uint16('x00280011'),
-        bitsAllocated: dataSet.uint16('x00280100'), 
+        bitsAllocated: dataSet.uint16('x00280100'),
         bitsStored: dataSet.uint16('x00280101'),
         highBit: dataSet.uint16('x00280102'),
         pixelRepresentation: dataSet.uint16('x00280103'),
@@ -75,6 +75,3 @@ function getLutData(lutDataSet, tag, lutDescriptor) {
     }
     return lut;
 }
-
-
-export default getImagePixelModule;

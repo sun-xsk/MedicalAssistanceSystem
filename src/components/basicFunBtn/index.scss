@@ -1,0 +1,27 @@
+@import '../../util/scss/all.scss';
+
+.toolIcons {
+  font-size: 30px;
+}
+.txt {
+  padding-left: 10px;
+  padding-top: 5px;
+}
+.singleTool {
+  border: 0;
+  height: 60%;
+  width: 70px;
+  margin-left: 15px;
+  color: #00a4d9;
+  transition: 0.4s;
+  background-color: #000000;
+  @include flexBox(center);
+  flex-direction: column;
+}
+.singleTool:first-child {
+  margin-left: 20px;
+}
+
+.singleTool:hover {
+  color: rgba(203, 201, 196, 0.6);
+}
