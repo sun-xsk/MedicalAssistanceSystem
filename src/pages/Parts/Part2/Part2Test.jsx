@@ -1,22 +1,23 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import {
 	cornerstone,
 	dicomParser,
 	cornerstoneWADOImageLoader,
 	cornerstoneTools,
-} from "../../../util/js/cornerstone";
-import extend from "../../../util/js/extend";
-import Item from "./Item/Item";
-import getImagePixelModule from "../../../util/js/getImagePixelModule";
-import metaDataProvider from "../../../util/js/meteDataProvider";
-import "./Part2.scss";
+	extend,
+	getImagePixelModule,
+	metaDataProvider
+} from "@/util/js";
+
 import {
 	uploadFile,
 	getDicomFileByPatientId_StudyDate_SeriesInstanceUID,
 	getFileInfo,
-} from "../../../util/api/httpUtil";
+} from "@/util/api/httpUtil";
+import Item from "./Item/Item";
+import "./Part2.scss";
 import Header from "../Header/Header";
-import { useLocation } from "react-router-dom";
 import "./Part2Test.scss";
 
 // 添加对应的工具信息

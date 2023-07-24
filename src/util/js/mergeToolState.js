@@ -1,4 +1,4 @@
-export default function mergeToolState(preToolState, newToolState) {
+export function mergeToolState(preToolState, newToolState) {
   if (JSON.stringify(preToolState) === '{}') {
     return newToolState;
   }

@@ -1,32 +1,23 @@
 import React, { useState, useRef, useEffect } from "react";
+import { message } from "antd";
 import {
 	cornerstone,
-	dicomParser,
 	cornerstoneWADOImageLoader,
 	cornerstoneTools,
-} from "../../../util/js/cornerstone";
-
-import mergeToolState from "../../../util/js/mergeToolState";
+	mergeToolState
+} from "@/util/js";
 
 import {
-	uploadFile,
-	// getInstanceNumbers,
-	// getDicomFile,
-	getFileInfo,
-} from "../../../util/api/httpUtil";
+	uploadFile
+} from "@/util/api";
 
-import myStore from "../../../util/store/store";
-import {
-	addLabeltoState,
-	setLabelName,
-	deleteLabeltoState,
-} from "../../../util/store/store";
+import myStore, {
+	addLabeltoState
+} from "@/util/store/store";
 import Header from "../Header/Header";
-import Item from "./Item/Item";
 import Detail from "./Detail/Detail";
 import "./Part1.scss";
-import { message } from "antd";
-import { BasicFunBtn } from "../../../components";
+import { BasicFunBtn } from "@/components";
 import axios from 'axios'
 
 // const mouseToolChain = [

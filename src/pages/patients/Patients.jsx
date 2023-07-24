@@ -5,6 +5,7 @@ import { getMainShow } from "../../util/api/httpUtil";
 import zhCN from "antd/es/locale/zh_CN";
 
 import "./patients.scss";
+import { numberToTime } from "../../util/js/numberToTime";
 
 export function Patients() {
 	//hooks
@@ -75,7 +76,7 @@ export function Patients() {
 			dataIndex: "studyDate",
 			key: "studyDate",
 			render: (_, val) => {
-				return val.studyDate || '未知'
+				return numberToTime(val.studyDate) || '未知'
 			}
 		},
 		{
