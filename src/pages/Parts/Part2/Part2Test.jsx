@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import {
 	cornerstone,
 	dicomParser,
@@ -7,21 +7,18 @@ import {
 	cornerstoneTools,
 	extend,
 	getImagePixelModule,
-	metaDataProvider
+	metaDataProvider,
 } from "@/util/js";
 
-import {
-	uploadFile,
-	getDicomFileByPatientId_StudyDate_SeriesInstanceUID,
-	getFileInfo,
-} from "@/util/api/httpUtil";
+import { uploadFile, getFileInfo } from "@/util/api/httpUtil";
+import { message } from "antd";
 import Item from "./Item/Item";
-import "./Part2.scss";
 import Header from "../Header/Header";
 import "./Part2Test.scss";
+import { getFile, getSeriesInfo } from "../../../util/api";
 
 // 添加对应的工具信息
-const mouseToolChain = [
+/* const mouseToolChain = [
 	{ name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
 	{
 		name: "Rotate",
@@ -39,7 +36,7 @@ const mouseToolChain = [
 		config: {},
 	},
 	{ name: "xxx", func: cornerstoneTools.clipBoxToDisplayedArea, config: {} },
-];
+]; */
 
 const toolState = {};
 
@@ -48,17 +45,24 @@ let prevToolName = ""; // 上一个激活工具名称
 
 export function Part2Test() {
 	const [ids, setIds] = useState([]);
+	//是否显示图片
 	const [isShow, setIsShow] = useState(false);
+	//鼠标坐标位置
 	const [position, setPosition] = useState({ x: 0, y: 0 });
+	// 四个角显示的信息
 	const [patientInfo, setPatientInfo] = useState({});
 	const [viewPort, setViewPort] = useState({
 		voi: { windowWidth: "", windowCenter: "" },
 		scale: 0,
 	});
+	// 记录seriesInstanceUID
+	const [seriesInstanceUID, setSeriesInstanceUID] = useState("");
+	const [messageApi, contextHolder] = message.useMessage();
+	const params = useParams();
+	const paramsSeriesInstanceUID = params?.seriesInstanceUID || "";
 
 	const fileRef = useRef(null);
 	const imgRef = useRef(null);
-	const location = useLocation();
 
 	let upTb = false;
 	let upLr = false;
@@ -152,49 +156,67 @@ export function Part2Test() {
 	}
 	//   加载图片
 	async function loadFiles(e) {
-		let files = e.target.files;
-		if (!files || !files.length) return;
+		const files = e.target.files;
 		const formdata = new FormData();
-		const demoData = new FormData();
-		demoData.append("file", files[0]);
-		imageIds = [];
-		for (let i = 1; i < files.length; i++) {
-			formdata.append("file", files[i - 1]);
-			let file = files[i];
-			imageIds[i - 1] = "";
-			let read = new FileReader();
-			read.readAsArrayBuffer(file);
-			read.onload = function () {
-				result = dicomParser.parseDicom(new Uint8Array(this.result));
-				fileImgId = "dicomfile:" + file.name;
-				let url = fileImgId;
-				imageIds[i - 1] = fileImgId;
-				//设置映射关系
-				cornerstoneWADOImageLoader.wadouri.dataSetCacheManager.add(url, result);
-				cornerstone.imageCache.putImageLoadObject(
-					fileImgId,
-					cornerstoneWADOImageLoader.wadouri.loadImageFromPromise(
-						new Promise((res) => {
-							res(result);
-						}),
-						fileImgId
-					)
-				);
-				const stack = {
-					currentImageIdIndex: 0,
-					imageIds,
-				};
-				//加载dcm文件并缓存
-				cornerstone.loadAndCacheImage(imageIds[0]).then((img) => {
-					cornerstone.displayImage(imgRef.current, img);
-					cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
-					cornerstoneTools.addToolState(imgRef.current, "stack", stack);
-				});
-			};
-		}
-		uploadFile(formdata).then((res) => {
-			console.log(res);
+
+		Array.from(files).forEach((file) => {
+			formdata.append("files", file);
 		});
+
+		messageApi.open({
+			key: "updatable",
+			type: "loading",
+			content: "上传中, 时间略长~",
+			duration: 0,
+		});
+		const res = await uploadFile(formdata);
+		if (res && res.status === 200) {
+			messageApi.open({
+				key: "updatable",
+				type: "success",
+				content: "上传成功",
+			});
+			//本地读取文件 并且显示
+			Array.from(files).forEach((file) => {
+				const imageId =
+					cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+				imageIds.push(imageId);
+				loadImage();
+			});
+
+			const seriesInstanceUID = res.data[0].seriesInstanceUID;
+			setSeriesInstanceUID(seriesInstanceUID);
+			const resFileINFO = await getSeriesInfo(seriesInstanceUID);
+			const {
+				accessionNumber,
+				modality,
+				patientAge,
+				patientId,
+				patientName,
+				patientSex,
+				studyDate,
+			} = resFileINFO.status === 200 ? resFileINFO.data : {};
+			setPatientInfo({
+				AccessionNumber: accessionNumber,
+				PatientName: patientName,
+				PatientSex: patientSex,
+				Modality: modality,
+				PatientAge: patientAge,
+				PatientID: patientId,
+				StudyDate: studyDate,
+			});
+
+			const filePaths = [];
+			//添加文件id
+			for (let i = 1; i <= files.length; i++) {
+				filePaths.push(getImageId(patientInfo.SeriesInstanceUID, i));
+			}
+			sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
+			setIsShow(true);
+		} else {
+			messageApi.open({ key: "updatable", type: "error", content: "上传失败" });
+		}
+
 		setIsShow(true);
 		let fileInfo = await getFileInfo(demoData);
 		let patientInfo = { ...fileInfo.data };
@@ -205,6 +227,18 @@ export function Part2Test() {
 		}
 		sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
 		sessionStorage.setItem("PATIENT_INFO", JSON.stringify(patientInfo));
+	}
+
+	async function loadImage() {
+		const image = await cornerstone.loadImage(imageIds[0]);
+		cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
+		const stack = {
+			currentImageIdIndex: 0,
+			imageIds,
+		};
+		// 为启用元素添加 stack 工具状态
+		cornerstoneTools.addToolState(imgRef.current, "stack", stack);
+		cornerstone.displayImage(imgRef.current, image);
 	}
 
 	//鼠标位置定位
@@ -229,7 +263,7 @@ export function Part2Test() {
 		//获取文件名
 		const dcmName = dcmData.image.imageId;
 		const match = dcmName.match(/(?<=wadouri:http:\/\/)\d-\d{3}/);
-		const newName = match ? match[0] : 'filename';
+		const newName = match ? match[0] : "filename";
 		const dcmCanvas = document.getElementsByClassName("cornerstone-canvas")[0];
 		const a = document.createElement("a");
 		a.href = dcmCanvas.toDataURL("image/png");
@@ -244,63 +278,35 @@ export function Part2Test() {
 			`seriesInstanceUID=${seriesInstanceUID}&instanceNumber=${instanceNumber}`
 		);
 	};
-	//获取患者信息
-
-	useEffect(() => {
-		let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null;
-		if (path && isShow) {
-			//从SessionStorage中获取信息
-			setPatientInfo(JSON.parse(sessionStorage.getItem("PATIENT_INFO")));
-		}
-	}, [isShow]);
-
-	//获取患者对应的dicom
-	const getPatientDicom = (record) => {
-		const { patientId, seriesInstanceUID, studyDate } = record;
-		getDicomFileByPatientId_StudyDate_SeriesInstanceUID(
-			patientId,
-			seriesInstanceUID,
-			studyDate
-		).then(
-			async (res) => {
-				console.log(res);
-				const imageIds = Object.values(res.data).map((item) => {
-					// 创建一个URL对象
-					const url = new URL(item);
-					// 替换协议、域名和端口
-					url.protocol = "http:"; // 替换为https协议
-					url.hostname = "localhost"; // 替换为新的域名
-					url.port = "5173"; // 替换为新的端口
-
-					// 构建新的URL字符串
-					const newUrlString = url.href;
-					return "wadouri:" + newUrlString;
-				});
-				const image = await cornerstone.loadImage(imageIds[0]);
-				cornerstoneTools.addStackStateManager(element, ["stack"]);
-				const stack = {
-					currentImageIdIndex: 0,
-					imageIds,
-				};
-				// 为启用元素添加 stack 工具状态
-				cornerstoneTools.addToolState(element, "stack", stack);
-				cornerstone.displayImage(element, image);
-			},
-			(err) => {
-				console.log(err);
-			}
-		);
-	};
 
 	useEffect(() => {
 		cornerstone.enable(imgRef.current);
-		const StackScrollMouseWheelTool =
-			cornerstoneTools.StackScrollMouseWheelTool;
-		cornerstoneTools.addTool(StackScrollMouseWheelTool);
-		cornerstoneTools.setToolActive("StackScrollMouseWheel", {});
 		extend();
-		if (location.state) {
-			getPatientDicom(location.state.record);
+		if (paramsSeriesInstanceUID !== "noId") {
+			setSeriesInstanceUID(paramsSeriesInstanceUID);
+			(async () => {
+				messageApi.open({
+					key: "updatable",
+					type: "loading",
+					content: "正在获取镜像, 时间略长~",
+					duration: 0,
+				});
+				getFile(paramsSeriesInstanceUID, 2).then((res) => {
+					// 假设 data 是返回来的二进制数据
+					const data = res;
+					const blob = new Blob([data]);
+					const file = new File([blob], "name");
+					const imageId =
+						cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+					imageIds.push(imageId);
+					loadImage();
+					messageApi.open({
+						key: "updatable",
+						type: "success",
+						content: "获取成功",
+					});
+				});
+			})();
 		}
 	}, []);
 	//图像剪裁
@@ -308,7 +314,6 @@ export function Part2Test() {
 		const clipAreaWrap = useRef(null); // 截图区域dom
 		const clipCanvas = useRef(null); // 用于截图的的canvas，以及截图开始生成截图效果（背景置灰）
 		const drawCanvas = document.getElementsByClassName("cornerstone-canvas")[0];
-		const [clipImgData, setClipImgData] = useState("");
 		const init = (wrap) => {
 			if (!wrap) return;
 			clipAreaWrap.current = wrap;
@@ -336,9 +341,6 @@ export function Part2Test() {
 			const clipImg = document.createElement("img");
 			clipImg.classList.add("img_anonymous");
 			clipImg.crossOrigin = "anonymous";
-
-			// 那其实画的是原始大小的clipImg
-			//clipAreaWrap.current.appendChild(clipImg);
 
 			// 绘制截图区域
 			clipImg.onload = () => {
@@ -388,6 +390,7 @@ export function Part2Test() {
 			// 截图完毕，获取截图图片数据
 			document.addEventListener("mouseup", function (e) {
 				if (start) {
+					//生成base64格式的url
 					var url = getClipPicUrl(
 						{
 							x: start.x,
@@ -398,8 +401,6 @@ export function Part2Test() {
 						drawCanvasCtx
 					);
 					start = null;
-					//生成base64格式的url
-					setClipImgData(url);
 					cancelCut();
 					downloadBase64(url, "clipped");
 				}
@@ -482,6 +483,7 @@ export function Part2Test() {
 	const { init, cut } = clip();
 	return (
 		<div className="Part2Test">
+			{contextHolder}
 			<Header />
 			<div className="toolBar">
 				<div className="left">
@@ -561,11 +563,6 @@ export function Part2Test() {
 
 			{/* 下面展示图片 */}
 			<div className="p-detail">
-				{/* 截图区域 */}
-				{/* <div className="clip-img-area">
-					<img src={clipImgData} alt="" id="img" />
-				</div> */}
-
 				<div className="p-picList">
 					<div className="showPic">
 						{/* ids.map((item, index) => {
@@ -573,7 +570,6 @@ export function Part2Test() {
 						}) */}
 					</div>
 				</div>
-
 				<div className="detailPicBox" onMouseMove={(e) => handleMouseMove(e)}>
 					<div
 						className="detailPic"
