@@ -23,7 +23,7 @@ export default function Home() {
 						<div className="content">
 							<div className="Span">医学影像训练样本标注工具软件</div>
 						</div>
-						<Link to="/patients" state={"/Part1"} className="link">
+						<Link to="/patients/Part1" state={"/Part1"} className="link">
 							click here to use this tool &gt;
 						</Link>
 					</div>
@@ -32,7 +32,7 @@ export default function Home() {
 						<div className="content">
 							<div className="Span">医学影像预处理工具软件</div>
 						</div>
-						<Link to="/patients" state={"/Part2"} className="link">
+						<Link to="/patients/Part2" state={"/Part2"} className="link">
 							click here to use this tool &gt;
 						</Link>
 					</div>

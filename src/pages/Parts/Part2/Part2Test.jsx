@@ -1,22 +1,23 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import {
 	cornerstone,
 	dicomParser,
 	cornerstoneWADOImageLoader,
 	cornerstoneTools,
-} from "../../../util/js/cornerstone";
-import extend from "../../../util/js/extend";
-import Item from "./Item/Item";
-import getImagePixelModule from "../../../util/js/getImagePixelModule";
-import metaDataProvider from "../../../util/js/meteDataProvider";
-import "./Part2.scss";
+	extend,
+	getImagePixelModule,
+	metaDataProvider
+} from "@/util/js";
+
 import {
 	uploadFile,
 	getDicomFileByPatientId_StudyDate_SeriesInstanceUID,
 	getFileInfo,
-} from "../../../util/api/httpUtil";
+} from "@/util/api/httpUtil";
+import Item from "./Item/Item";
+import "./Part2.scss";
 import Header from "../Header/Header";
-import { useLocation } from "react-router-dom";
 import "./Part2Test.scss";
 
 // 添加对应的工具信息
@@ -109,7 +110,6 @@ export function Part2Test() {
 			hflip: upLr,
 		});
 	}
-
 	//图片降噪
 	function denoiseImage() {
 		if (!cv) return;
@@ -229,7 +229,7 @@ export function Part2Test() {
 		//获取文件名
 		const dcmName = dcmData.image.imageId;
 		const match = dcmName.match(/(?<=wadouri:http:\/\/)\d-\d{3}/);
-		const newName = match[0];
+		const newName = match ? match[0] : 'filename';
 		const dcmCanvas = document.getElementsByClassName("cornerstone-canvas")[0];
 		const a = document.createElement("a");
 		a.href = dcmCanvas.toDataURL("image/png");

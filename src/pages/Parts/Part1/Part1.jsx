@@ -1,66 +1,60 @@
 import React, { useState, useRef, useEffect } from "react";
-
+import { message } from "antd";
 import {
 	cornerstone,
-	dicomParser,
 	cornerstoneWADOImageLoader,
 	cornerstoneTools,
-} from "../../../util/js/cornerstone";
+	mergeToolState
+} from "@/util/js";
 
 import {
-	uploadFile,
-	// getInstanceNumbers,
-	// getDicomFile,
-	getFileInfo,
-} from "../../../util/api/httpUtil";
+	uploadFile
+} from "@/util/api";
 
-import myStore from "../../../util/store/store";
-import {
-	addLabeltoState,
-	setLabelName,
-	deleteLabeltoState,
-} from "../../../util/store/store";
+import myStore, {
+	addLabeltoState
+} from "@/util/store/store";
 import Header from "../Header/Header";
-import Item from "./Item/Item";
 import Detail from "./Detail/Detail";
 import "./Part1.scss";
+import { BasicFunBtn } from "@/components";
+import { getAnnotation, getFile, getSeriesInfo, saveAnnotationFun } from "../../../util/api";
+import { useParams } from "react-router-dom";
 
-const mouseToolChain = [
-	{
-		name: "StackScrollMouseWheel",
-		func: cornerstoneTools.StackScrollMouseWheelTool,
-		config: {},
-	},
-	{ name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
-	{
-		name: "ZoomMouseWheel",
-		func: cornerstoneTools.ZoomMouseWheelTool,
-		config: {},
-	},
-	{ name: "Pan", func: cornerstoneTools.PanTool, config: {} },
-	{ name: "Magnify", func: cornerstoneTools.MagnifyTool, config: {} },
-	{ name: "Angle", func: cornerstoneTools.AngleTool, config: {} },
-	{ name: "Length", func: cornerstoneTools.LengthTool, config: {} },
-	{ name: "Eraser", func: cornerstoneTools.EraserTool, config: {} },
-	{
-		name: "CircleScissors",
-		func: cornerstoneTools.CircleScissorsTool,
-		config: {},
-	},
-	{
-		name: "RectangleScissors",
-		func: cornerstoneTools.RectangleScissorsTool,
-		config: {},
-	},
-	{
-		name: "FreehandScissors",
-		func: cornerstoneTools.FreehandScissorsTool,
-		config: {},
-	},
-	{ name: "Brush", func: cornerstoneTools.BrushTool },
-];
-
-const toolState = {};
+// const mouseToolChain = [
+// 	{
+// 		name: "StackScrollMouseWheel",
+// 		func: cornerstoneTools.StackScrollMouseWheelTool,
+// 		config: {},
+// 	},
+// 	{ name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
+// 	{
+// 		name: "ZoomMouseWheel",
+// 		func: cornerstoneTools.ZoomMouseWheelTool,
+// 		config: {},
+// 	},
+// 	{ name: "Pan", func: cornerstoneTools.PanTool, config: {} },
+// 	{ name: "Magnify", func: cornerstoneTools.MagnifyTool, config: {} },
+// 	{ name: "Angle", func: cornerstoneTools.AngleTool, config: {} },
+// 	{ name: "Length", func: cornerstoneTools.LengthTool, config: {} },
+// 	{ name: "Eraser", func: cornerstoneTools.EraserTool, config: {} },
+// 	{
+// 		name: "CircleScissors",
+// 		func: cornerstoneTools.CircleScissorsTool,
+// 		config: {},
+// 	},
+// 	{
+// 		name: "RectangleScissors",
+// 		func: cornerstoneTools.RectangleScissorsTool,
+// 		config: {},
+// 	},
+// 	{
+// 		name: "FreehandScissors",
+// 		func: cornerstoneTools.FreehandScissorsTool,
+// 		config: {},
+// 	},
+// 	{ name: "Brush", func: cornerstoneTools.BrushTool },
+// ];
 
 let activeToolName = ""; // 激活工具名称
 let prevToolName = ""; // 上一个激活工具名称
@@ -84,21 +78,31 @@ function marker() {
 }
 
 export function Part1() {
-	const [position, setPosition] = useState({ x: 0, y: 0 });
 	const fileRef = useRef(null);
 	const imgRef = useRef(null);
-	const picRef = useRef(null);
-	let [viewPort, setViewPort] = useState({});
-	const [patientInfo, setPatientInfo] = useState({});
-	const [isShow, setIsShow] = useState(false);
+	const params = useParams();
+	const paramsSeriesInstanceUID = params?.seriesInstanceUID || '';
+	const [messageApi, contextHolder] = message.useMessage();
+	const [viewPort, setViewPort] = useState({});
+	// 位置信息
+	const [position, setPosition] = useState({ x: 0, y: 0 });
+	// 四个角显示的信息
+	const [patientInfo, setPatientInfo] = useState({ PatientName: '', PatientID: '', PatientAge: '', PatientAddress: '', Modality: '', StudyDate: '', AccessionNumber: 0 });
+	// 是否上传了文件
+	const [isUploadFile, setIsUploadFile] = useState(false);
+	// 看意思是存储右侧信息
 	const [details, setDetails] = useState([]);
+	// 工具的加入与否
+	const [isAddTool, setIsAllTool] = useState({});
+	// 记录seriesInstanceUID
+	const [seriesInstanceUID, setSeriesInstanceUID] = useState('');
 
 	useEffect(() => {
 		cornerstone.enable(imgRef.current);
 		setDetails(myStore.getState().labelDetails);
 		myStore.subscribe(() => {
-			let newLableDetails = myStore.getState().labelDetails;
-			setDetails([...newLableDetails]);
+			const newLableDetails = myStore.getState().labelDetails;
+			setDetails(e => Array.from(new Set([...e, ...newLableDetails])));
 		});
 
 		//添加绘图事件
@@ -110,7 +114,6 @@ export function Part1() {
 				detail.toolName = e.detail.toolName;
 
 				let ifhad = false;
-
 				uuids.forEach((item) => {
 					if (item == detail.uuid) {
 						ifhad = true;
@@ -120,7 +123,7 @@ export function Part1() {
 				if (!ifhad) {
 					uuids.push(detail.uuid);
 					setTimeout(() => {
-						let detailString = JSON.stringify(detail);
+						const detailString = JSON.stringify(detail);
 						myStore.dispatch(addLabeltoState(detailString));
 					}, 100);
 				}
@@ -134,24 +137,33 @@ export function Part1() {
 		}));
 	}, []);
 
-	// useEffect(() => {
-	//   console.log(details);
-	// }, [details])
+	// 适用于从已有的获取
+	useEffect(() => {
+		if (paramsSeriesInstanceUID !== 'noId') {
+			setSeriesInstanceUID(paramsSeriesInstanceUID);
+			(async () => {
+				messageApi.open({ key: 'updatable', type: 'loading', content: '正在获取镜像, 时间略长~', duration: 0 });
+				getFile(paramsSeriesInstanceUID, 2).then(res => {
+					// 假设 data 是返回来的二进制数据
+					const data = res;
+					const blob = new Blob([data]);
+					const file = new File([blob], 'name');
+					const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+					imageIds.push(imageId);
+					loadImage()
+					messageApi.open({ key: 'updatable', type: 'success', content: '获取成功' });
+				});
+			})()
+		}
+	}, []);
 
-	let getImageId = (seriesInstanceUID, instanceNumber) => {
+	const getImageId = (seriesInstanceUID, instanceNumber) => {
 		return (
 			"wadouri:" +
 			"http://8.130.137.118:8080/MedicalSystem/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber?" +
 			`seriesInstanceUID=${seriesInstanceUID}&instanceNumber=${instanceNumber}`
 		);
 	};
-
-	useEffect(() => {
-		let path = JSON.parse(sessionStorage.getItem("FILE_PATH")) || null;
-		if (path && isShow) {
-			setPatientInfo(JSON.parse(sessionStorage.getItem("PATIENT_INFO")));
-		}
-	}, [isShow]);
 
 	function chooseTool(name) {
 		return () => {
@@ -167,14 +179,14 @@ export function Part1() {
 				); // 把上一个激活工具冻结
 			}
 			activeToolName = tool + "Tool";
-			if (!toolState[activeToolName]) {
+			if (!isAddTool[activeToolName]) {
 				// 不能重复 addTool
 				cornerstoneTools.addToolForElement(
 					imgRef.current,
 					cornerstoneTools[activeToolName],
 					tool === "TextMarker" ? marker() : {}
 				);
-				toolState[activeToolName] = true;
+				setIsAllTool(e => ({ ...e, [activeToolName]: true }));
 			}
 			prevToolName = tool;
 			// 激活工具
@@ -188,60 +200,133 @@ export function Part1() {
 		fileRef.current.click();
 	}
 	let imageIds = [];
+
+	async function loadImage() {
+		const image = await cornerstone.loadImage(imageIds[0]);
+		cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
+		const stack = {
+			currentImageIdIndex: 0,
+			imageIds,
+		};
+		// 为启用元素添加 stack 工具状态
+		cornerstoneTools.addToolState(imgRef.current, "stack", stack);
+		cornerstone.displayImage(imgRef.current, image);
+	}
+
 	async function loadFiles(e) {
-		let files = e.target.files;
-		let formdata = new FormData();
-		let demoData = new FormData();
-		//本地读取文件 并且=显示
+		const files = e.target.files;
+		const formdata = new FormData();
+
 		Array.from(files).forEach((file) => {
-			const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
-			imageIds.push(imageId);
-			async function loadImage() {
-				const image = await cornerstone.loadImage(imageIds[0]);
-				cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
-				const stack = {
-					currentImageIdIndex: 0,
-					imageIds,
-				};
-				// 为启用元素添加 stack 工具状态
-				cornerstoneTools.addToolState(imgRef.current, "stack", stack);
-				cornerstone.displayImage(imgRef.current, image);
-			}
-			loadImage()
+			formdata.append('files', file);
 		});
 
-		demoData.append("file", files[0]);
-		//uploadFile(formdata);
+		messageApi.open({ key: 'updatable', type: 'loading', content: '上传中, 时间略长~', duration: 0 });
+		const res = await uploadFile(formdata);
+		if (res && res.status === 200) {
+			messageApi.open({ key: 'updatable', type: 'success', content: '上传成功' });
+			//本地读取文件 并且显示
+			Array.from(files).forEach((file) => {
+				const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+				imageIds.push(imageId);
+				loadImage()
+			});
 
-		let fileInfo = await getFileInfo(demoData);
-		// console.log(fileInfo);
-		//此处
-		let patientInfo = { ...fileInfo.data };
-		// console.log(patientInfo)
-		//添加文件id
-		let filePaths = [];
-		for (let i = 1; i <= files.length; i++) {
-			filePaths.push(getImageId(patientInfo.SeriesInstanceUID, i));
+			const seriesInstanceUID = res.data[0].seriesInstanceUID;
+			setSeriesInstanceUID(seriesInstanceUID);
+			const resFileINFO = await getSeriesInfo(seriesInstanceUID);
+			const { accessionNumber, modality, patientAge, patientId, patientName, patientSex, studyDate } = resFileINFO.status === 200 ? resFileINFO.data : {};
+			setPatientInfo({
+				AccessionNumber: accessionNumber,
+				PatientName: patientName,
+				PatientSex: patientSex,
+				Modality: modality,
+				PatientAge: patientAge,
+				PatientID: patientId,
+				StudyDate: studyDate
+			});
+
+			const filePaths = [];
+			//添加文件id
+			for (let i = 1; i <= files.length; i++) {
+				filePaths.push(getImageId(patientInfo.SeriesInstanceUID, i));
+			}
+			sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
+			setIsUploadFile(true);
+		} else {
+			messageApi.open({ key: 'updatable', type: 'error', content: '上传失败' });
 		}
-		sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
-		sessionStorage.setItem("PATIENT_INFO", JSON.stringify(patientInfo));
-		setIsShow(true);
+	}
+
+	async function saveAnnotation() {
+		if (seriesInstanceUID !== '') {
+			const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
+			const nowToolState = toolStateManager.toolState;
+			if (JSON.stringify(nowToolState) === '{}') {
+				return message.info('当前没有批注');
+			}
+			const label = JSON.stringify(nowToolState);
+			const res = await saveAnnotationFun(seriesInstanceUID, label);
+			if (res.status === 200) {
+				message.success('成功保存标记');
+			} else {
+				message.info('未知错误');
+			}
+		}
+	}
+
+	async function restoreData() {
+		if (imgRef.current && seriesInstanceUID !== '') {
+			const res = await getAnnotation(seriesInstanceUID);
+			if (res.status === 200) {
+				const annotation = JSON.parse(res.data.label);
+				const newLabel = [];
+				if (JSON.stringify(annotation) === '{}') return message.info('没有要还原的标注');
+				const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
+				const curAnnotation = toolStateManager.toolState;
+				const toolState = mergeToolState(annotation, curAnnotation);
+				for (const imageId in toolState) {
+					for (const toolName in toolState[imageId]) {
+						const data = [...toolState[imageId][toolName].data];
+						for (const dataIndex in data) {
+							newLabel.push(data[dataIndex]);
+							const activeToolName = toolName + "Tool";
+							if (!isAddTool[activeToolName]) {
+								// 不能重复 addTool
+								cornerstoneTools.addToolForElement(
+									imgRef.current,
+									cornerstoneTools[activeToolName],
+									toolName === "TextMarker" ? marker() : {}
+								);
+								setIsAllTool(e => ({ ...e, [activeToolName]: true }));
+							}
+							toolStateManager.addImageIdToolState(imageId, toolName, data[dataIndex]);
+							cornerstoneTools.setToolActiveForElement(imgRef.current, toolName, {
+								mouseButtonMask: 1,
+							});
+							cornerstoneTools.setToolPassive(toolName);
+						}
+					}
+				}
+				setDetails(e => [...newLabel]);
+				message.success('还原标注成功');
+			}
+		}
 	}
 
 	const handleMouseMove = (e) => {
-		setPosition({
-			x: e.nativeEvent.offsetX,
-			y: e.nativeEvent.offsetY,
-		});
-		if (imgRef.current && isShow) {
+		const { offsetX: x, offsetY: y } = e.nativeEvent;
+		setPosition({ x, y, });
+		if (imgRef.current && isUploadFile) {
 			setViewPort((viewPort) => ({
 				...viewPort,
 				...cornerstone.getViewport(imgRef.current),
 			}));
 		}
 	};
+
 	const handleWheel = () => {
-		if (imgRef.current && isShow) {
+		if (imgRef.current && isUploadFile) {
 			setViewPort((viewPort) => ({
 				...viewPort,
 				...cornerstone.getViewport(imgRef.current),
@@ -254,7 +339,6 @@ export function Part1() {
 		if (Object.getOwnPropertyNames(details).length == 0) {
 			return;
 		}
-
 		let title = [
 			"PatientID",
 			"PatientName",
@@ -268,11 +352,9 @@ export function Part1() {
 			"Length",
 			"Points",
 		];
-
 		//填充基本信息和类型
 		let str = [];
 		str.push(title.join(",") + "\r\n");
-
 		for (let i = 0; i < details.length; i++) {
 			let arr = new Array(title.length).fill("");
 			for (let j = 0; j < title.length; j++) {
@@ -293,7 +375,6 @@ export function Part1() {
 			}
 			str.push(arr.join(",") + "\r\n");
 		}
-
 		const blob = new Blob(["\uFEFF" + str.join("")], {
 			type: "test/csv;charset=utf-8",
 		});
@@ -308,72 +389,24 @@ export function Part1() {
 	};
 	//导出文件具体方法
 
+	const { AccessionNumber, Modality, PatientAddress, PatientAge, PatientID, PatientName, StudyDate } = patientInfo;
 	return (
 		<div className="Part1">
+			{contextHolder}
 			<Header />
 			<div className="toolBar">
-				<button
-					className="singleTool"
-					onClick={chooseTool("StackScrollMouseWheel")}
-				>
-					<span className="iconfont toolIcons">&#xe6f6;</span>
-					<div className="txt">滚动切片</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("Wwwc")}>
-					<span className="iconfont toolIcons">&#xe635;</span>
-					<div className="txt">窗宽/窗位</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("ZoomMouseWheel")}>
-					<span className="iconfont toolIcons">&#xe7ca;</span>
-					<div className="txt">缩放</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("Magnify")}>
-					<span className="iconfont toolIcons">&#xe662;</span>
-					<div className="txt">放大镜</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("Pan")}>
-					<span className="iconfont toolIcons">&#xeb70;</span>
-					<div className="txt">移动</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("Angle")}>
-					<span className="iconfont toolIcons">&#xe631;</span>
-					<div className="txt">角度测量</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("Length")}>
-					<span className="iconfont toolIcons">&#xedda;</span>
-					<div className="txt">长度测量</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("Eraser")}>
-					<span className="iconfont toolIcons">&#xe606;</span>
-					<div className="txt">橡皮擦</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("CircleRoi")}>
-					<span className="iconfont toolIcons">&#xe61b;</span>
-					<div className="txt">圆形标注</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("RectangleRoi")}>
-					<span className="iconfont toolIcons">&#xe604;</span>
-					<div className="txt">矩形标注</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("FreehandRoi")}>
-					<span className="iconfont toolIcons">&#xe6ec;</span>
-					<div className="txt">自由标注</div>
-				</button>
-
-				<button className="singleTool" onClick={chooseTool("Brush")}>
-					<span className="iconfont toolIcons">&#xe670;</span>
-					<div className="txt">画笔工具</div>
-				</button>
+				<BasicFunBtn title='滚动切片' iconCode='&#xe6f6;' onClick={chooseTool("StackScrollMouseWheel")} />
+				<BasicFunBtn title='窗宽/窗位' iconCode='&#xe635;' onClick={chooseTool("Wwwc")} />
+				<BasicFunBtn title='缩放' iconCode='&#xe7ca;' onClick={chooseTool("ZoomMouseWheel")} />
+				<BasicFunBtn title='放大镜' iconCode='&#xe662;' onClick={chooseTool("Magnify")} />
+				<BasicFunBtn title='移动' iconCode='&#xeb70;' onClick={chooseTool("Pan")} />
+				<BasicFunBtn title='角度测量' iconCode='&#xe631;' onClick={chooseTool("Angle")} />
+				<BasicFunBtn title='长度测量' iconCode='&#xedda;' onClick={chooseTool("Length")} />
+				<BasicFunBtn title='橡皮擦' iconCode='&#xe606;' onClick={chooseTool("Eraser")} />
+				<BasicFunBtn title='圆形标注' iconCode='&#xe61b;' onClick={chooseTool("CircleRoi")} />
+				<BasicFunBtn title='矩形标注' iconCode='&#xe604;' onClick={chooseTool("RectangleRoi")} />
+				<BasicFunBtn title='自由标注' iconCode='&#xe6ec;' onClick={chooseTool("FreehandRoi")} />
+				<BasicFunBtn title='画笔工具' iconCode='&#xe670;' onClick={chooseTool("Brush")} />
 
 				<button className="uploadTool" onClick={uploadFiles}>
 					<div className="txt">上传影像</div>
@@ -385,10 +418,10 @@ export function Part1() {
 						ref={fileRef}
 					/>
 				</button>
-				<button className="saveTool" onClick={() => handleExport()}>
+				<button className="saveTool" onClick={() => saveAnnotation()}>
 					<div className="txt">保存标注</div>
 				</button>
-				<button className="rev">还原标注</button>
+				<button className="rev" onClick={() => { restoreData() }}>还原标注</button>
 			</div>
 
 			<div className="p-detail">
@@ -408,14 +441,14 @@ export function Part1() {
 				>
 					<div className="detailPic" ref={imgRef}></div>
 
-					{isShow ? (
+					{isUploadFile ? (
 						<div className="position">
 							<span>X:{position.x}</span>
 							&nbsp;
 							<span>Y:{position.y}</span>
 						</div>
 					) : null}
-					{isShow ? (
+					{isUploadFile ? (
 						<div className="viewPort">
 							<div>Zoom:{Math.floor(viewPort.scale * 100)}%</div>
 							<div>
@@ -429,45 +462,39 @@ export function Part1() {
 						</div>
 					) : null}
 
-					{isShow ? (
+					{isUploadFile ? (
 						<div className="PatientInfo">
 							<p>
 								Patient Name :{" "}
-								{patientInfo.PatientName
-									? patientInfo.PatientName
-									: "undefined"}
+								{PatientName ? PatientName : '未知'}
 							</p>
 							<p>
 								Patient ID :{" "}
-								{patientInfo.PatientID ? patientInfo.PatientID : "undefined"}
+								{PatientID ? PatientID : '未知'}
 							</p>
 							<p>
 								Patinet Age :{" "}
-								{patientInfo.PatientAge ? patientInfo.PatientAge : "undefined"}
+								{PatientAge ? PatientAge : '未知'}
 							</p>
 							<p>
 								Patinet Address :{" "}
-								{patientInfo.PatientAddress
-									? patientInfo.PatientAddress
-									: "undefined"}
+								{PatientAddress ? PatientAddress : '未知'}
 							</p>
 						</div>
 					) : null}
-					{isShow ? (
+					{isUploadFile ? (
 						<div className="study">
 							<p>
 								Modality :{" "}
-								{patientInfo.Modality ? patientInfo.Modality : "undefined"}
+								{Modality ? Modality : '未知'}
 							</p>
 							<p>
 								Study Date :{" "}
-								{patientInfo.StudyDate ? patientInfo.StudyDate : "undefined"}
+								{StudyDate ? StudyDate : '未知'}
 							</p>
 							<p>
 								Accession Number :{" "}
-								{patientInfo.AccessionNumber
-									? patientInfo.AccessionNumber
-									: "undefined"}
+								{AccessionNumber ? AccessionNumber : '未知'}
 							</p>
 						</div>
 					) : null}
@@ -485,7 +512,7 @@ export function Part1() {
 						<div className="tagDetails">
 							{details.map((detail, index) => {
 								return (
-									<Detail detail={detail} index={index} key={detail.uuid} />
+									<Detail detail={detail} index={index} key={`key-${index}`} />
 								);
 							})}
 						</div>

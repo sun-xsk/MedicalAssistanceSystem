@@ -2,9 +2,7 @@ import axios from "axios";
 import { message } from "antd";
 
 const instance = axios.create({
-  // baseURL: "68.112.100:50000/MedicalSystem",
-  // baseURL: "http://43.142.168.114:8001/MedicalSystem",
-  baseURL: "/MedicalSystem",
+  baseURL: "/api",
   withCredentials: true,
   timeout: 100000,
 });
@@ -64,18 +62,18 @@ instance.interceptors.response.use(
     return res.data;
   },
   (err) => {
-    console.log(err);
     handleNetError(err.response.status);
     Promise.reject(err.response);
   }
 );
 
-export const Get = (url, params) => {
+export const Get = (url, params, responseType) => {
   return new Promise((resolve, reject) => {
     instance({
       method: 'get',
       url,
-      params
+      params,
+      responseType
     }).then((result) => {
       resolve(result);
     })

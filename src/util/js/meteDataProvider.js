@@ -1,13 +1,13 @@
 import cornerstoneWADOImageLoader from "cornerstone-wado-image-loader";
 
-function metaDataProvider(type, imageId) {
+export function metaDataProvider(type, imageId) {
     var parsedImageId = cornerstoneWADOImageLoader.wadouri.parseImageId(imageId);
     // cornerstoneWADOImageLoader.wadouri.dataSetCacheManager.get 这里就是被改写后的获取，若是不改写，源码是获取不到我们加入的 DataSet 内容
     // 原因在于 源码每次返回的都是一个新对象，且 loadedDataSets 是不暴露的
     var dataSet = cornerstoneWADOImageLoader.wadouri.dataSetCacheManager.get(parsedImageId.url);
     if (!dataSet) {
         return;
-    } 
+    }
 
     if (type === 'generalSeriesModule') {
         return {
@@ -151,5 +151,3 @@ function getOverlayPlaneModule(dataSet) {
         overlays: overlays
     };
 }
-
-export default metaDataProvider;
