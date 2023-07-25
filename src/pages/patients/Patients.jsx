@@ -66,7 +66,7 @@ export function Patients() {
 			getMainShow(filter)
 				.then((res) => {
 					console.log(res);
-					// setDataList(res.data);
+					setDataList(res.data);
 					// setDataList({ rows: res.data });
 				})
 				.finally(() => {
@@ -75,8 +75,8 @@ export function Patients() {
 		} else {
 			getMainShow()
 				.then((res) => {
-					//console.log(res);
-					// setDataList(res.data);
+					console.log(res);
+					setDataList(res.data);
 					// setDataList({ rows: res.data });
 				})
 				.finally(() => {

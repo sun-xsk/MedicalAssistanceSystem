@@ -13,6 +13,9 @@ export default defineConfig({
 				changeOrigin: true,
 				rewrite: (path) => path.replace(/^\/agent/, ""),
 			},
+			"/tmp": {
+				target: "http://8.130.137.118:8080",
+			},
 		},
 	},
 });
