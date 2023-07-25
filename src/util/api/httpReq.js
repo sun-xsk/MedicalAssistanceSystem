@@ -67,12 +67,13 @@ instance.interceptors.response.use(
   }
 );
 
-export const Get = (url, params) => {
+export const Get = (url, params, responseType) => {
   return new Promise((resolve, reject) => {
     instance({
       method: 'get',
       url,
-      params
+      params,
+      responseType
     }).then((result) => {
       resolve(result);
     })

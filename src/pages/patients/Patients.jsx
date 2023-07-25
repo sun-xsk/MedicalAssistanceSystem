@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Form, Input, DatePicker, Button, Table, ConfigProvider, message } from "antd";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { getMainShow } from "../../util/api/httpUtil";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { numberToTime } from "@/util/js/numberToTime";
+import { getMainShow } from "@/util/api/httpUtil";
 import zhCN from "antd/es/locale/zh_CN";
 
 import "./patients.scss";
-import { numberToTime } from "../../util/js/numberToTime";
 
 export function Patients() {
-	//hooks
+	const param = useParams();
+	const part = param?.cate || 'part1';
 	const location = useLocation();
 	const navigate = useNavigate();
 	const [loading, setLoading] = useState(false);
@@ -17,6 +18,7 @@ export function Patients() {
 
 	const { RangePicker } = DatePicker;
 	const [form] = Form.useForm();
+
 	const columns = [
 		{
 			title: "#",
@@ -87,6 +89,16 @@ export function Patients() {
 				return val.examDescription || '未知'
 			}
 		},
+		{
+			title: "详情",
+			dataIndex: 'detail',
+			key: 'detail',
+			render: (_, val) => {
+				return <Button onClick={() => {
+					navigate(`/${part}/${val.seriesInstanceUID}`)
+				}}>进入详细</Button>
+			}
+		}
 	];
 
 	const onSearch = () => {
@@ -156,7 +168,7 @@ export function Patients() {
 						</Button>
 					</Form>
 					<Button>
-						<Link to={location.state} className="link">
+						<Link to={`/${part}/noId`} className="link">
 							本地上传
 						</Link>
 					</Button>

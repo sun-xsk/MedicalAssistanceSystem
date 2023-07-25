@@ -18,7 +18,8 @@ import Header from "../Header/Header";
 import Detail from "./Detail/Detail";
 import "./Part1.scss";
 import { BasicFunBtn } from "@/components";
-import { getAnnotation, getSeriesInfo, saveAnnotationFun } from "../../../util/api";
+import { getAnnotation, getFile, getSeriesInfo, saveAnnotationFun } from "../../../util/api";
+import { useParams } from "react-router-dom";
 
 // const mouseToolChain = [
 // 	{
@@ -79,7 +80,8 @@ function marker() {
 export function Part1() {
 	const fileRef = useRef(null);
 	const imgRef = useRef(null);
-	const picRef = useRef(null);
+	const params = useParams();
+	const paramsSeriesInstanceUID = params?.seriesInstanceUID || '';
 	const [messageApi, contextHolder] = message.useMessage();
 	const [viewPort, setViewPort] = useState({});
 	// 位置信息
@@ -135,9 +137,25 @@ export function Part1() {
 		}));
 	}, []);
 
-	// useEffect(() => {
-	//   console.log(details);
-	// }, [details])
+	// 适用于从已有的获取
+	useEffect(() => {
+		if (paramsSeriesInstanceUID !== 'noId') {
+			setSeriesInstanceUID(paramsSeriesInstanceUID);
+			(async () => {
+				messageApi.open({ key: 'updatable', type: 'loading', content: '正在获取镜像, 时间略长~', duration: 0 });
+				getFile(paramsSeriesInstanceUID, 2).then(res => {
+					// 假设 data 是返回来的二进制数据
+					const data = res;
+					const blob = new Blob([data]);
+					const file = new File([blob], 'name');
+					const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+					imageIds.push(imageId);
+					loadImage()
+					messageApi.open({ key: 'updatable', type: 'success', content: '获取成功' });
+				});
+			})()
+		}
+	}, []);
 
 	const getImageId = (seriesInstanceUID, instanceNumber) => {
 		return (
