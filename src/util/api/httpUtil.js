@@ -29,6 +29,10 @@ export const saveAnnotationFun = (seriesInstanceUID, label) =>
 export const getAnnotation = (seriesInstanceUID) =>
 	Get(`/label/getInfo?seriesInstanceUID=${seriesInstanceUID}`)
 
+// 下载文件
+export const getFile = () =>
+	Get(`/file/getFile`)
+
 //获取dicom文件，instanceNumber文件序列号，seriesInstanceUID序列uid
 export const getDicomFile = (seriesInstanceUID, instanceNumber) =>
 	Get("/file/getDicomFileBySeriesInstanceUIDAndInstanceNumber", {
