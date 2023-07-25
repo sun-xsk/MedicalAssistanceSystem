@@ -9,15 +9,15 @@ export default [
 		element: <Home />,
 	},
 	{
-		path:"patients",
-		element:<Patients />
+		path: "patients/:cate",
+		element: <Patients />
 	},
 	{
-		path: "part1",
+		path: "part1/:seriesInstanceUID",
 		element: <Part1 />,
 	},
 	{
-		path: "part2",
+		path: "part2/:seriesInstanceUID",
 		element: <Part2Test />,
 	},
 	{
