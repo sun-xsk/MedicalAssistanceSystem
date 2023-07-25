@@ -166,8 +166,6 @@ export function Part2Test() {
 			read.readAsArrayBuffer(file);
 			read.onload = function () {
 				result = dicomParser.parseDicom(new Uint8Array(this.result));
-				/* let url = "http://" + file.name;
-				fileImgId = "wadouri:" + url; */
 				fileImgId = "dicomfile:" + file.name;
 				let url = fileImgId;
 				imageIds[i - 1] = fileImgId;
@@ -194,7 +192,9 @@ export function Part2Test() {
 				});
 			};
 		}
-		//uploadFile(formdata);
+		uploadFile(formdata).then((res) => {
+			console.log(res);
+		});
 		setIsShow(true);
 		let fileInfo = await getFileInfo(demoData);
 		let patientInfo = { ...fileInfo.data };
@@ -262,8 +262,29 @@ export function Part2Test() {
 			seriesInstanceUID,
 			studyDate
 		).then(
-			(res) => {
+			async (res) => {
 				console.log(res);
+				const imageIds = Object.values(res.data).map((item) => {
+					// 创建一个URL对象
+					const url = new URL(item);
+					// 替换协议、域名和端口
+					url.protocol = "http:"; // 替换为https协议
+					url.hostname = "localhost"; // 替换为新的域名
+					url.port = "5173"; // 替换为新的端口
+
+					// 构建新的URL字符串
+					const newUrlString = url.href;
+					return "wadouri:" + newUrlString;
+				});
+				const image = await cornerstone.loadImage(imageIds[0]);
+				cornerstoneTools.addStackStateManager(element, ["stack"]);
+				const stack = {
+					currentImageIdIndex: 0,
+					imageIds,
+				};
+				// 为启用元素添加 stack 工具状态
+				cornerstoneTools.addToolState(element, "stack", stack);
+				cornerstone.displayImage(element, image);
 			},
 			(err) => {
 				console.log(err);
@@ -492,10 +513,7 @@ export function Part2Test() {
 						<div className="txt">左右翻转</div>
 					</button>
 
-					<button
-						className="singleTool"
-						onClick={chooseTool("ZoomMouseWheel")}
-					>
+					<button className="singleTool" onClick={chooseTool("ZoomMouseWheel")}>
 						<span className="iconfont toolIcons">&#xe631;</span>
 						<div className="txt">图像缩放</div>
 					</button>

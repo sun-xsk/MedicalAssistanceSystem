@@ -124,18 +124,28 @@ export function Patients() {
 	};
 
 	useEffect(() => {
-		(async () => {
-			setLoading(true);
-			const res = await getMainShow();
-			if (res && res.status === 200) {
-				setDataList({ rows: res.data, total: res.data.length })
-				setSearchDataList({ rows: res.data, total: res.data.length });
-				setLoading(false);
-			} else {
-				message.error('网络出现错误')
-			}
-		})()
-	}, []);
+		if (filter.patientId || filter.seriesInstanceUID || filter.studyDate) {
+			getMainShow(filter)
+				.then((res) => {
+					console.log(res);
+					setDataList(res.data);
+					// setDataList({ rows: res.data });
+				})
+				.finally(() => {
+					setLoading(false);
+				});
+		} else {
+			getMainShow()
+				.then((res) => {
+					console.log(res);
+					setDataList(res.data);
+					// setDataList({ rows: res.data });
+				})
+				.finally(() => {
+					setLoading(false);
+				});
+		}
+	}, [filter]);
 
 	return (
 		<div className="patientWrapper">
