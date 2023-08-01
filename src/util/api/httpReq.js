@@ -3,8 +3,8 @@ import { message } from "antd";
 
 const instance = axios.create({
   baseURL: "/api",
-  withCredentials: true,
-  timeout: 100000,
+  // withCredentials: true,
+  // timeout: 100000,
 });
 
 const handleNetError = (errStatus) => {
@@ -62,8 +62,10 @@ instance.interceptors.response.use(
     return res.data;
   },
   (err) => {
-    handleNetError(err.response.status);
-    Promise.reject(err.response);
+    if (err.response && err.response.status) {
+      handleNetError(err.response.status);
+      Promise.reject(err.response);
+    }
   }
 );
 
