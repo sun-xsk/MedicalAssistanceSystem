@@ -41,10 +41,9 @@ export const getDicomFile = (seriesInstanceUID, instanceNumber) =>
 	});
 
 //获取窗口信息
-export const getMainShow = (filedata) =>
-	Post("/file/getMainShow", filedata, "", {
-		"Content-Type": "multipart/form-data",
-	});
+export const getMainShow = (params) =>
+	Post("/file/getMainShow", params);
+
 
 //获取病人信息  参数dicom文件
 export const getFileInfo = (filedata) =>

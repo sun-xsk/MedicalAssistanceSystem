@@ -143,16 +143,31 @@ export function Part1() {
 			setSeriesInstanceUID(paramsSeriesInstanceUID);
 			(async () => {
 				messageApi.open({ key: 'updatable', type: 'loading', content: '正在获取镜像, 时间略长~', duration: 0 });
-				getFile(paramsSeriesInstanceUID, 2).then(res => {
-					// 假设 data 是返回来的二进制数据
-					const data = res;
-					const blob = new Blob([data]);
-					const file = new File([blob], 'name');
-					const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
-					imageIds.push(imageId);
-					loadImage()
-					messageApi.open({ key: 'updatable', type: 'success', content: '获取成功' });
+				const resFileINFO = await getSeriesInfo(paramsSeriesInstanceUID);
+				const { accessionNumber, modality, patientAge, patientId, patientName, patientSex, studyDate, instanceNumbers } = resFileINFO.status === 200 ? resFileINFO.data : {};
+				const instanceNumber = JSON.parse(instanceNumbers || '[]');
+				setPatientInfo({
+					AccessionNumber: accessionNumber,
+					PatientName: patientName,
+					PatientSex: patientSex,
+					Modality: modality,
+					PatientAge: patientAge,
+					PatientID: patientId,
+					StudyDate: studyDate
 				});
+				instanceNumber.forEach((item) => {
+					getFile(paramsSeriesInstanceUID, item).then(async (res) => {
+						// 假设 data 是返回来的二进制数据
+						const data = res;
+						const blob = new Blob([data]);
+						const file = new File([blob], 'name');
+						const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+						imageIds.push(imageId);
+						loadImage()
+					});
+				})
+				messageApi.open({ key: 'updatable', type: 'success', content: '获取成功' });
+				setIsUploadFile(true);
 			})()
 		}
 	}, []);

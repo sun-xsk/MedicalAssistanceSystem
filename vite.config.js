@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from 'path'
+import { URL } from "url";
 
 export default defineConfig({
 	plugins: [react()],
@@ -19,7 +20,7 @@ export default defineConfig({
 				// target: "http://8.130.137.118:8080",
 				target: "http://49.232.238.116:8001/MedicalSystem",
 				changeOrigin: true,
-				rewrite: (path) => path.replace(/^\/api/, "")
+				rewrite: (path) => path.replace(/^\/api/, ""),
 			},
 			"/tmp": {
 				target: "http://8.130.137.118:8080",
