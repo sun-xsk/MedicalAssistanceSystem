@@ -4,7 +4,8 @@ import {
 	cornerstone,
 	cornerstoneWADOImageLoader,
 	cornerstoneTools,
-	mergeToolState
+	mergeToolState,
+	filter
 } from "@/util/js";
 
 import {
@@ -139,7 +140,12 @@ export function Part1() {
 
 	// 适用于从已有的获取
 	useEffect(() => {
-		if (paramsSeriesInstanceUID !== 'noId') {
+		const files = sessionStorage.getItem('files');
+		const seriesInstanceUID = sessionStorage.getItem('seriesInstanceUID');
+		if ((files && paramsSeriesInstanceUID !== 'noId' && seriesInstanceUID === paramsSeriesInstanceUID) ||
+			(files && paramsSeriesInstanceUID === 'noId')) {
+			loadImage(JSON.parse(files));
+		} else if (paramsSeriesInstanceUID !== 'noId') {
 			setSeriesInstanceUID(paramsSeriesInstanceUID);
 			(async () => {
 				messageApi.open({ key: 'updatable', type: 'loading', content: '正在获取镜像, 时间略长~', duration: 0 });
@@ -155,17 +161,15 @@ export function Part1() {
 					PatientID: patientId,
 					StudyDate: studyDate
 				});
-				instanceNumber.forEach((item) => {
-					getFile(paramsSeriesInstanceUID, item).then(async (res) => {
-						// 假设 data 是返回来的二进制数据
-						const data = res;
-						const blob = new Blob([data]);
-						const file = new File([blob], 'name');
-						const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
-						imageIds.push(imageId);
-						loadImage()
-					});
+				const res = instanceNumber.map((item) => getFile(paramsSeriesInstanceUID, item));
+				const resInfo = await Promise.all(res);
+				const files = [];
+				resInfo.forEach(item => {
+					const blob = new Blob([item]);
+					const file = new File([blob], 'name');
+					files.push(file);
 				})
+				loadImage(files);
 				messageApi.open({ key: 'updatable', type: 'success', content: '获取成功' });
 				setIsUploadFile(true);
 			})()
@@ -214,9 +218,15 @@ export function Part1() {
 	function uploadFiles() {
 		fileRef.current.click();
 	}
-	let imageIds = [];
 
-	async function loadImage() {
+	async function loadImage(files) {
+		const imageIds = [];
+
+		Array.from(files).forEach((file) => {
+			const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+			imageIds.push(imageId);
+		});
+
 		const image = await cornerstone.loadImage(imageIds[0]);
 		cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
 		const stack = {
@@ -230,24 +240,19 @@ export function Part1() {
 
 	async function loadFiles(e) {
 		const files = e.target.files;
-		const formdata = new FormData();
-
-		Array.from(files).forEach((file) => {
-			formdata.append('files', file);
-		});
+		const [formDataArr] = filter(files);
 
 		messageApi.open({ key: 'updatable', type: 'loading', content: '上传中, 时间略长~', duration: 0 });
-		const res = await uploadFile(formdata);
-		if (res && res.status === 200) {
-			messageApi.open({ key: 'updatable', type: 'success', content: '上传成功' });
-			//本地读取文件 并且显示
-			Array.from(files).forEach((file) => {
-				const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
-				imageIds.push(imageId);
-				loadImage()
-			});
+		const resArr = formDataArr.map((item) => uploadFile(item));
+		const res = await Promise.all(resArr);
+		const isSuccess = res.every(item => item.status === 200);
 
-			const seriesInstanceUID = res.data[0].seriesInstanceUID;
+		if (isSuccess) {
+			messageApi.open({ key: 'updatable', type: 'success', content: '上传成功' });
+			// 本地读取文件 并且显示
+			loadImage(files)
+
+			const seriesInstanceUID = res[0].data[0].seriesInstanceUID;
 			setSeriesInstanceUID(seriesInstanceUID);
 			const resFileINFO = await getSeriesInfo(seriesInstanceUID);
 			const { accessionNumber, modality, patientAge, patientId, patientName, patientSex, studyDate } = resFileINFO.status === 200 ? resFileINFO.data : {};
