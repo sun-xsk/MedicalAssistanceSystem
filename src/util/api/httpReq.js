@@ -1,8 +1,10 @@
 import axios from "axios";
 import { message } from "antd";
 
+const BASEURL = process.env.NODE_ENV === 'dev' ? '/api' : 'http://49.232.238.116:8001/MedicalSystem';
+
 const instance = axios.create({
-  baseURL: "/api",
+  baseURL: BASEURL,
   // withCredentials: true,
   // timeout: 100000,
 });
