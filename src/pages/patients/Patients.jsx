@@ -8,7 +8,7 @@ import {
 	ConfigProvider,
 	message,
 } from "antd";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { numberToTime } from "@/util/js/numberToTime";
 import { getMainShow } from "@/util/api/httpUtil";
 import zhCN from "antd/es/locale/zh_CN";
@@ -114,41 +114,32 @@ export function Patients() {
 		},
 	];
 
-	const onSearch = () => {
+	const onSearch = async () => {
 		setLoading(true);
 		const fillData = form.getFieldsValue();
-		const sourceData = dataList.rows;
 		const fillTime = fillData.studyDate
 			? fillData.studyDate.map((time) => time.format("YYYYMMDD").toString())
 			: [];
-
-		const filiterData = sourceData.filter((item) => {
-			if (fillTime.length !== 0) {
-				if (item.studyDate < fillTime[0] || item.studyDate > fillTime[1])
-					return false;
-			}
-			for (const field in fillData) {
-				if (fillData[field] && field !== "studyDate") {
-					const isPass = fillData[field] === item[field] ? true : false;
-					if (!isPass) return false;
-				}
-			}
-			return true;
-		});
-		setSearchDataList({ rows: filiterData, total: filiterData.length });
+		delete fillData.studyDate;
+		fillData["startDate"] = fillTime[0];
+		fillData["endDate"] = fillTime[1];
+		const res = await getMainShow(fillData);
+		if (res.status === 200) {
+			setSearchDataList({ rows: res.data.rows, total: res.data.total });
+		}
 		setLoading(false);
 	};
 
 	useEffect(() => {
 		(async () => {
 			setLoading(true);
-			const res = await getMainShow();
+			const res = await getMainShow({});
 			if (res && res.status === 200) {
-				setDataList({ rows: res.data, total: res.data.length });
-				setSearchDataList({ rows: res.data, total: res.data.length });
+				setDataList({ rows: res.data.rows, total: res.data.total });
+				setSearchDataList({ rows: res.data.rows, total: res.data.total });
 				setLoading(false);
 			} else {
-				message.error("网络出现错误");
+				// message.error('网络出现错误')
 			}
 		})();
 	}, []);
@@ -167,9 +158,12 @@ export function Patients() {
 						<Form.Item name={"patientId"}>
 							<Input name={"patientId"} placeholder="患者编号" />
 						</Form.Item>
-						<Form.Item name={"seriesInstanceUID"}>
-							<Input placeholder="检查编号" />
+						<Form.Item name={"patientName"}>
+							<Input name={"patientName"} placeholder="患者姓名" />
 						</Form.Item>
+						{/* <Form.Item name={"seriesInstanceUID"}>
+							<Input placeholder="检查编号" />
+						</Form.Item> */}
 						<Form.Item name={"studyDate"}>
 							<RangePicker format={"YYMMDD"} />
 						</Form.Item>
@@ -202,7 +196,7 @@ export function Patients() {
 						pagination={{
 							style: { padding: "0 16px" },
 							position: ["bottomLeft"],
-							total: dataList.total,
+							total: searchDataList.total,
 							showTotal: (total) => <span>{`共 ${total} 条`}</span>,
 							showQuickJumper: true,
 							onChange: () => {},

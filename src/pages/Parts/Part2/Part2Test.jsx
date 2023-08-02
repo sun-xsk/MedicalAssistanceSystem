@@ -55,8 +55,6 @@ export function Part2Test() {
 		voi: { windowWidth: "", windowCenter: "" },
 		scale: 0,
 	});
-	// 记录seriesInstanceUID
-	const [seriesInstanceUID, setSeriesInstanceUID] = useState("");
 	const [messageApi, contextHolder] = message.useMessage();
 	const params = useParams();
 	const paramsSeriesInstanceUID = params?.seriesInstanceUID || "";
@@ -158,11 +156,9 @@ export function Part2Test() {
 	async function loadFiles(e) {
 		const files = e.target.files;
 		const formdata = new FormData();
-
 		Array.from(files).forEach((file) => {
 			formdata.append("files", file);
 		});
-
 		messageApi.open({
 			key: "updatable",
 			type: "loading",
@@ -183,9 +179,7 @@ export function Part2Test() {
 				imageIds.push(imageId);
 				loadImage();
 			});
-
 			const seriesInstanceUID = res.data[0].seriesInstanceUID;
-			setSeriesInstanceUID(seriesInstanceUID);
 			const resFileINFO = await getSeriesInfo(seriesInstanceUID);
 			const {
 				accessionNumber,
@@ -205,7 +199,6 @@ export function Part2Test() {
 				PatientID: patientId,
 				StudyDate: studyDate,
 			});
-
 			const filePaths = [];
 			//添加文件id
 			for (let i = 1; i <= files.length; i++) {
@@ -228,7 +221,7 @@ export function Part2Test() {
 		sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
 		sessionStorage.setItem("PATIENT_INFO", JSON.stringify(patientInfo));
 	}
-
+	//加载图片并显示
 	async function loadImage() {
 		const image = await cornerstone.loadImage(imageIds[0]);
 		cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
@@ -240,7 +233,6 @@ export function Part2Test() {
 		cornerstoneTools.addToolState(imgRef.current, "stack", stack);
 		cornerstone.displayImage(imgRef.current, image);
 	}
-
 	//鼠标位置定位
 	const handleMouseMove = (e) => {
 		setPosition({
@@ -254,7 +246,6 @@ export function Part2Test() {
 			}));
 		}
 	};
-
 	// 下载文件
 	function downLoad() {
 		const dcmData = cornerstone.getEnabledElement(imgRef.current);
@@ -270,7 +261,7 @@ export function Part2Test() {
 		a.download = newName + ".png";
 		a.click();
 	}
-
+	//获取图片id
 	const getImageId = (seriesInstanceUID, instanceNumber) => {
 		return (
 			"wadouri:" +
@@ -283,7 +274,6 @@ export function Part2Test() {
 		cornerstone.enable(imgRef.current);
 		extend();
 		if (paramsSeriesInstanceUID !== "noId") {
-			setSeriesInstanceUID(paramsSeriesInstanceUID);
 			(async () => {
 				messageApi.open({
 					key: "updatable",
@@ -291,21 +281,45 @@ export function Part2Test() {
 					content: "正在获取镜像, 时间略长~",
 					duration: 0,
 				});
-				getFile(paramsSeriesInstanceUID, 2).then((res) => {
-					// 假设 data 是返回来的二进制数据
-					const data = res;
-					const blob = new Blob([data]);
-					const file = new File([blob], "name");
-					const imageId =
-						cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
-					imageIds.push(imageId);
-					loadImage();
-					messageApi.open({
-						key: "updatable",
-						type: "success",
-						content: "获取成功",
+				const resFileINFO = await getSeriesInfo(paramsSeriesInstanceUID);
+				const {
+					accessionNumber,
+					modality,
+					patientAge,
+					patientId,
+					patientName,
+					patientSex,
+					studyDate,
+					instanceNumbers,
+				} = resFileINFO.status === 200 ? resFileINFO.data : {};
+				const instanceNumber = JSON.parse(instanceNumbers || "[]");
+				setPatientInfo({
+					AccessionNumber: accessionNumber,
+					PatientName: patientName,
+					PatientSex: patientSex,
+					Modality: modality,
+					PatientAge: patientAge,
+					PatientID: patientId,
+					StudyDate: studyDate,
+				});
+				instanceNumber.forEach((item) => {
+					getFile(paramsSeriesInstanceUID, item).then(async (res) => {
+						// 假设 data 是返回来的二进制数据
+						const data = res;
+						const blob = new Blob([data]);
+						const file = new File([blob], "name");
+						const imageId =
+							cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+						imageIds.push(imageId);
+						loadImage();
 					});
 				});
+				messageApi.open({
+					key: "updatable",
+					type: "success",
+					content: "获取成功",
+				});
+				setIsShow(true);
 			})();
 		}
 	}, []);
@@ -327,21 +341,17 @@ export function Part2Test() {
 		const cut = () => {
 			const drawCanvasCtx = drawCanvas.getContext("2d");
 			const clipCanvasCtx = clipCanvas.current.getContext("2d");
-
 			const wrapWidth = clipAreaWrap.current.clientWidth;
 			const wrapHeight = clipAreaWrap.current.clientHeight;
 			clipCanvas.current.width = wrapWidth;
 			clipCanvas.current.height = wrapHeight;
-
 			// 设置截图时灰色背景
 			clipCanvasCtx.fillStyle = "rgba(0,0,0,0.6)";
 			clipCanvasCtx.strokeStyle = "rgba(0,143,255,1)";
-
 			// 生成一个截取区域的img 然后把它作为canvas的第一个参数
 			const clipImg = document.createElement("img");
 			clipImg.classList.add("img_anonymous");
 			clipImg.crossOrigin = "anonymous";
-
 			// 绘制截图区域
 			clipImg.onload = () => {
 				// x,y -> 计算从drawCanvasCtx的的哪一x,y坐标点进行绘制
@@ -361,9 +371,7 @@ export function Part2Test() {
 					clipImg.height
 				);
 			};
-
 			let start = null;
-
 			// 获取截图开始的点
 			clipCanvas.current.onmousedown = function (e) {
 				start = {
@@ -371,7 +379,6 @@ export function Part2Test() {
 					y: e.offsetY,
 				};
 			};
-
 			// 绘制截图区域效果
 			clipCanvas.current.onmousemove = function (e) {
 				if (start) {
@@ -386,7 +393,6 @@ export function Part2Test() {
 					);
 				}
 			};
-
 			// 截图完毕，获取截图图片数据
 			document.addEventListener("mouseup", function (e) {
 				if (start) {
@@ -406,7 +412,7 @@ export function Part2Test() {
 				}
 			});
 		};
-
+		//取消剪切
 		const cancelCut = () => {
 			clipCanvas.current.width = clipAreaWrap.current.clientWidth;
 			clipCanvas.current.height = clipAreaWrap.current.clientHeight;
@@ -423,7 +429,6 @@ export function Part2Test() {
 			//移除临时截图创建的canvas
 			imgRef.current.children[0].remove();
 		};
-
 		const getClipPicUrl = (area, drawCanvasCtx) => {
 			const canvas = document.createElement("canvas");
 			const context = canvas.getContext("2d");
@@ -433,7 +438,6 @@ export function Part2Test() {
 			context.putImageData(data, 0, 0);
 			return canvas.toDataURL("image/png", 1);
 		};
-
 		//base64格式下载png
 		function downloadBase64(content, fileName) {
 			var base64ToBlob = function (code) {
@@ -456,7 +460,6 @@ export function Part2Test() {
 			aLink.click();
 			aLink.remove();
 		}
-
 		// 绘制出截图的效果
 		const fill = (context, ctxWidth, ctxHeight, x, y, w, h) => {
 			context.clearRect(0, 0, ctxWidth, ctxHeight);
@@ -494,27 +497,26 @@ export function Part2Test() {
 						<span className="iconfont toolIcons">&#xe6f6;</span>
 						<div className="txt">滚动切片</div>
 					</button>
-
 					<button className="singleTool" onClick={chooseTool("Wwwc")}>
 						<span className="iconfont toolIcons">&#xe635;</span>
 						<div className="txt">图像加强</div>
 					</button>
-
 					<button className="singleTool" onClick={denoiseImage}>
 						<span className="iconfont toolIcons">&#xe7ca;</span>
 						<div className="txt">图像去噪</div>
 					</button>
-
+					<button className="singleTool" onClick={chooseTool("Pan")}>
+						<span className="iconfont toolIcons">&#xe662;</span>
+						<div className="txt">移动图像</div>
+					</button>
 					<button className="singleTool" onClick={upsideDownTb}>
 						<span className="iconfont toolIcons">&#xe662;</span>
 						<div className="txt">上下翻转</div>
 					</button>
-
 					<button className="singleTool" onClick={upsideDownLr}>
 						<span className="iconfont toolIcons">&#xeb70;</span>
 						<div className="txt">左右翻转</div>
 					</button>
-
 					<button className="singleTool" onClick={chooseTool("ZoomMouseWheel")}>
 						<span className="iconfont toolIcons">&#xe631;</span>
 						<div className="txt">图像缩放</div>
