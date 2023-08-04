@@ -199,7 +199,7 @@ export function Patients() {
 							total: searchDataList.total,
 							showTotal: (total) => <span>{`共 ${total} 条`}</span>,
 							showQuickJumper: true,
-							onChange: () => {},
+							onChange: () => { },
 							onShowQuickJump: (page) => {
 								console.log(page);
 							},
