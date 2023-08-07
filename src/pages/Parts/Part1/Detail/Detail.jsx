@@ -35,24 +35,27 @@ export default function Detail(props) {
         }
     }
 
-    const saveName = () => {
-        const name = nameRef.current.value;
-        if (name.trim() === '') return;
-        setAnnotation(e => {
-            e[imageId][Tool].data[Number(index)].tagName = name;
-            return e;
-        })
-        setShowName(name);
-        message.success('保存成功');
-    }
-
     const deleteName = () => {
         setShowName(' ');
         setAnnotation(e => {
             e[imageId][Tool].data[Number(index)].tagName = ' ';
             return e;
         })
-        message.success('删除成功');
+        // message.success('删除成功');
+    }
+
+    const saveName = () => {
+        const name = nameRef.current.value;
+        if (name.trim() === '') {
+            deleteName();
+            return message.success('保存成功');
+        };
+        setAnnotation(e => {
+            e[imageId][Tool].data[Number(index)].tagName = name;
+            return e;
+        })
+        setShowName(name);
+        message.success('保存成功');
     }
 
     return <div className="detail-box" >
@@ -83,7 +86,7 @@ export default function Detail(props) {
             </div>
             <div className='deleteBox'>
                 <div onClick={saveName} className='detail-delete'>保存</div>
-                <div onClick={deleteName} className='detail-delete'>删除</div>
+                {/* <div onClick={deleteName} className='detail-delete'>删除</div> */}
             </div>
         </div>
     </div>

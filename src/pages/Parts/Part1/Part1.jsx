@@ -72,10 +72,15 @@ export function Part1() {
 	useEffect(() => {
 		setAnnotation({});
 		cornerstone.enable(imgRef.current);
+
 		setDetails(myStore.getState().labelDetails);
 		myStore.subscribe(() => {
 			const newLableDetails = myStore.getState().labelDetails;
+			// console.log('newLableDetails', newLableDetails);
 			setDetails(e => Array.from(new Set([...e, ...newLableDetails])));
+			// const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
+			// const nowToolState = toolStateManager.toolState;
+			// setDetails(nowToolState);
 		});
 
 		//添加绘图事件
@@ -265,17 +270,18 @@ export function Part1() {
 	async function setAnnotationInLocal() {
 		const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
 		const nowToolState = toolStateManager.toolState;
-		console.log('nowToolState', nowToolState)
 		setAnnotation(nowToolState);
 	}
 
 	async function saveAnnotation() {
 		if (seriesInstanceUID !== '') {
+			console.log('annotation', annotation)
 			// const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
 			// const nowToolState = toolStateManager.toolState;
 			if (JSON.stringify(annotation) === '{}') {
 				return message.info('当前没有批注');
 			}
+			console.log('saving annotation', annotation);
 			const label = JSON.stringify(annotation);
 			const res = await saveAnnotationFun(seriesInstanceUID, label);
 			if (res.status === 200) {
@@ -292,33 +298,29 @@ export function Part1() {
 			const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
 			const toolState = toolStateManager.toolState;
 			for (const imageId in toolState) {
-				for (const toolName in toolState[imageId]) {
-					cornerstoneTools.clearToolState(imgRef.current, toolName);
-				}
+				toolStateManager.clearImageIdToolState(imageId)
 			}
 			// 刷新图像
 			cornerstone.updateImage(imgRef.current);
+
 		}
 	}
 
+	// 还原标注
 	async function restoreData(seriesInstanceUID) {
 		if (imgRef.current && seriesInstanceUID !== '') {
 			const res = await getAnnotation(seriesInstanceUID);
 			if (res.status === 200) {
-				const annotation = JSON.parse(res.data.label);
-				const newLabel = [];
-				if (JSON.stringify(annotation) === '{}') return message.info('没有要还原的标注');
+				const toolState = JSON.parse(res.data.label);
+				if (JSON.stringify(toolState) === '{}') return message.info('没有要还原的标注');
 				const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
 				// 清除之前的标注
 				clearAllAnnotations();
-				const toolState = annotation;
-				// 清除标签
-				setAnnotation({});
+
 				for (const imageId in toolState) {
 					for (const toolName in toolState[imageId]) {
 						const data = [...toolState[imageId][toolName].data];
 						for (const dataIndex in data) {
-							newLabel.push(data[dataIndex]);
 							const activeToolName = toolName + "Tool";
 							if (!isAddTool[activeToolName]) {
 								// 不能重复 addTool
@@ -329,6 +331,8 @@ export function Part1() {
 								);
 								setIsAllTool(e => ({ ...e, [activeToolName]: true }));
 							}
+
+							console.log('toolStateManager.addImageIdToolState', toolStateManager.addImageIdToolState)
 							toolStateManager.addImageIdToolState(imageId, toolName, data[dataIndex]);
 							cornerstoneTools.setToolActiveForElement(imgRef.current, toolName, {
 								mouseButtonMask: 1,
@@ -337,9 +341,12 @@ export function Part1() {
 						}
 					}
 				}
-				setDetails(() => [...newLabel]);
+
 				setAnnotation(toolState)
+				cornerstone.updateImage(imgRef.current);
 				message.success('还原标注成功');
+			} else if (!res.data) {
+				message.info(res.msg || '信息为空');
 			}
 		}
 	}

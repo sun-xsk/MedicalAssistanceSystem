@@ -1,7 +1,8 @@
 import axios from "axios";
 import { message } from "antd";
 
-// 10.19.0.26:51010
+// pro: 10.19.0.26:51010
+// dev: 49.232.238.116:8001
 const BASEURL = process.env.NODE_ENV === 'dev' ? '/api' : 'http://49.232.238.116:8001/MedicalSystem';
 
 const instance = axios.create({
