@@ -2,41 +2,19 @@ import React, { useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import {
 	cornerstone,
-	dicomParser,
 	cornerstoneWADOImageLoader,
 	cornerstoneTools,
 	extend,
 	getImagePixelModule,
 	metaDataProvider,
+	filter
 } from "@/util/js";
 
 import { uploadFile, getFileInfo } from "@/util/api/httpUtil";
 import { message } from "antd";
-import Item from "./Item/Item";
 import Header from "../Header/Header";
 import "./Part2Test.scss";
 import { getFile, getSeriesInfo } from "../../../util/api";
-
-// 添加对应的工具信息
-/* const mouseToolChain = [
-	{ name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
-	{
-		name: "Rotate",
-		func: cornerstoneTools.RotateTool,
-		config: {},
-	},
-	{
-		name: "FreehandScissors",
-		func: cornerstoneTools.FreehandScissorsTool,
-		config: {},
-	},
-	{
-		name: "ZoomMouseWheel",
-		func: cornerstoneTools.ZoomMouseWheelTool,
-		config: {},
-	},
-	{ name: "xxx", func: cornerstoneTools.clipBoxToDisplayedArea, config: {} },
-]; */
 
 const toolState = {};
 
@@ -155,41 +133,23 @@ export function Part2Test() {
 	//   加载图片
 	async function loadFiles(e) {
 		const files = e.target.files;
-		const formdata = new FormData();
-		Array.from(files).forEach((file) => {
-			formdata.append("files", file);
-		});
-		messageApi.open({
-			key: "updatable",
-			type: "loading",
-			content: "上传中, 时间略长~",
-			duration: 0,
-		});
-		const res = await uploadFile(formdata);
-		if (res && res.status === 200) {
-			messageApi.open({
-				key: "updatable",
-				type: "success",
-				content: "上传成功",
-			});
-			//本地读取文件 并且显示
-			Array.from(files).forEach((file) => {
-				const imageId =
-					cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
-				imageIds.push(imageId);
-				loadImage();
-			});
-			const seriesInstanceUID = res.data[0].seriesInstanceUID;
+		if (files.length === 0) return;
+		const [formDataArr] = filter(files);
+
+		message.loading('上传中，时间略长', 0)
+		const resArr = formDataArr.map((item) => uploadFile(item));
+		const res = await Promise.all(resArr);
+		const isSuccess = res.every(item => item.status === 200);
+
+		message.destroy();
+		if (isSuccess) {
+			message.success('上传成功');
+			// 本地读取文件 并且显示
+			loadImage(files)
+
+			const seriesInstanceUID = res[0].data[0].seriesInstanceUID;
 			const resFileINFO = await getSeriesInfo(seriesInstanceUID);
-			const {
-				accessionNumber,
-				modality,
-				patientAge,
-				patientId,
-				patientName,
-				patientSex,
-				studyDate,
-			} = resFileINFO.status === 200 ? resFileINFO.data : {};
+			const { accessionNumber, modality, patientAge, patientId, patientName, patientSex, studyDate } = resFileINFO.status === 200 ? resFileINFO.data : {};
 			setPatientInfo({
 				AccessionNumber: accessionNumber,
 				PatientName: patientName,
@@ -197,8 +157,9 @@ export function Part2Test() {
 				Modality: modality,
 				PatientAge: patientAge,
 				PatientID: patientId,
-				StudyDate: studyDate,
+				StudyDate: studyDate
 			});
+
 			const filePaths = [];
 			//添加文件id
 			for (let i = 1; i <= files.length; i++) {
@@ -207,22 +168,19 @@ export function Part2Test() {
 			sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
 			setIsShow(true);
 		} else {
-			messageApi.open({ key: "updatable", type: "error", content: "上传失败" });
+			message.error('上传失败');
 		}
-
-		setIsShow(true);
-		let fileInfo = await getFileInfo(demoData);
-		let patientInfo = { ...fileInfo.data };
-		//添加文件id
-		let filePaths = [];
-		for (let i = 1; i <= files.length; i++) {
-			filePaths.push(getImageId(patientInfo.SeriesInstanceUID, i));
-		}
-		sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
-		sessionStorage.setItem("PATIENT_INFO", JSON.stringify(patientInfo));
 	}
+
 	//加载图片并显示
-	async function loadImage() {
+	async function loadImage(files) {
+		const imageIds = [];
+
+		Array.from(files).forEach((file) => {
+			const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+			imageIds.push(imageId);
+		});
+
 		const image = await cornerstone.loadImage(imageIds[0]);
 		cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
 		const stack = {
@@ -233,6 +191,7 @@ export function Part2Test() {
 		cornerstoneTools.addToolState(imgRef.current, "stack", stack);
 		cornerstone.displayImage(imgRef.current, image);
 	}
+
 	//鼠标位置定位
 	const handleMouseMove = (e) => {
 		setPosition({
@@ -302,18 +261,15 @@ export function Part2Test() {
 					PatientID: patientId,
 					StudyDate: studyDate,
 				});
-				instanceNumber.forEach((item) => {
-					getFile(paramsSeriesInstanceUID, item).then(async (res) => {
-						// 假设 data 是返回来的二进制数据
-						const data = res;
-						const blob = new Blob([data]);
-						const file = new File([blob], "name");
-						const imageId =
-							cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
-						imageIds.push(imageId);
-						loadImage();
-					});
-				});
+				const res = instanceNumber.map((item) => getFile(paramsSeriesInstanceUID, item));
+				const resInfo = await Promise.all(res);
+				const files = [];
+				resInfo.forEach(item => {
+					const blob = new Blob([item]);
+					const file = new File([blob], 'name');
+					files.push(file);
+				})
+				loadImage(files);
 				messageApi.open({
 					key: "updatable",
 					type: "success",
@@ -323,6 +279,7 @@ export function Part2Test() {
 			})();
 		}
 	}, []);
+
 	//图像剪裁
 	const clip = () => {
 		const clipAreaWrap = useRef(null); // 截图区域dom
@@ -609,21 +566,21 @@ export function Part2Test() {
 								Patient Name :{" "}
 								{patientInfo.PatientName
 									? patientInfo.PatientName
-									: "undefined"}
+									: "未知"}
 							</p>
 							<p>
 								Patient ID :{" "}
-								{patientInfo.PatientID ? patientInfo.PatientID : "undefined"}
+								{patientInfo.PatientID ? patientInfo.PatientID : "未知"}
 							</p>
 							<p>
 								Patinet Age :{" "}
-								{patientInfo.PatientAge ? patientInfo.PatientAge : "undefined"}
+								{patientInfo.PatientAge ? patientInfo.PatientAge : "未知"}
 							</p>
 							<p>
 								Patinet Address :{" "}
 								{patientInfo.PatientAddress
 									? patientInfo.PatientAddress
-									: "undefined"}
+									: "未知"}
 							</p>
 						</div>
 					) : null}
@@ -632,17 +589,17 @@ export function Part2Test() {
 						<div className="study">
 							<p>
 								Modality :{" "}
-								{patientInfo.Modality ? patientInfo.Modality : "undefined"}
+								{patientInfo.Modality ? patientInfo.Modality : "未知"}
 							</p>
 							<p>
 								Study Date :{" "}
-								{patientInfo.StudyDate ? patientInfo.StudyDate : "undefined"}
+								{patientInfo.StudyDate ? patientInfo.StudyDate : "未知"}
 							</p>
 							<p>
 								Accession Number :{" "}
 								{patientInfo.AccessionNumber
 									? patientInfo.AccessionNumber
-									: "undefined"}
+									: "未知"}
 							</p>
 						</div>
 					) : null}

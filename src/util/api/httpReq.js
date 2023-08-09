@@ -7,7 +7,7 @@ const BASEURL = process.env.NODE_ENV === 'dev' ? '/api' : 'http://49.232.238.116
 
 const instance = axios.create({
   baseURL: BASEURL,
-  // withCredentials: true,
+  // withCredentials: true,kja
   // timeout: 100000,
 });
 

@@ -226,6 +226,7 @@ export function Part1() {
 
 	async function loadFiles(e) {
 		const files = e.target.files;
+		if (files.length === 0) return;
 		const [formDataArr] = filter(files);
 
 		clearAllAnnotations();
