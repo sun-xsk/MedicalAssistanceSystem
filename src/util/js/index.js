@@ -8,3 +8,5 @@ export * from './numberToTime'
 export * from './useStorage'
 export * from './useSyncCallback'
 export * from './filter'
+export * from './concurrencyRequest';
+export * from './fullScreen'

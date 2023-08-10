@@ -30,7 +30,7 @@ export const getAnnotation = (seriesInstanceUID) =>
 	Get(`/label/getInfo?seriesInstanceUID=${seriesInstanceUID}`)
 
 // 下载文件
-export const getFile = (seriesInstanceUID, instanceNumber) =>
+export const getFile = (instanceNumber, seriesInstanceUID) =>
 	Get(`/file/getFile?seriesInstanceUID=${seriesInstanceUID}&instanceNumber=${instanceNumber}`, {}, 'arraybuffer')
 
 //获取dicom文件，instanceNumber文件序列号，seriesInstanceUID序列uid

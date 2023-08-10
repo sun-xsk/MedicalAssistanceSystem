@@ -4,7 +4,9 @@ import {
 	cornerstone,
 	cornerstoneWADOImageLoader,
 	cornerstoneTools,
-	filter
+	filter,
+	concurrencyRequest,
+	fullScreen
 } from "@/util/js";
 import {
 	uploadFile
@@ -18,6 +20,7 @@ import { BasicFunBtn } from "@/components";
 import { getAnnotation, getFile, getSeriesInfo, saveAnnotationFun } from "../../../util/api";
 import { useParams } from "react-router-dom";
 import { DetailContainer } from "./DetailContainer";
+import { MessageCom } from "../../../components";
 
 let activeToolName = ""; // 激活工具名称
 let prevToolName = ""; // 上一个激活工具名称
@@ -68,6 +71,10 @@ export function Part1() {
 	const [seriesInstanceUID, setSeriesInstanceUID] = useState('');
 	// 记录所有标注
 	const [annotation, setAnnotation] = useState({});
+	const [count, setCount] = useState(0);
+	const [totalCount, setTotalCount] = useState(0);
+	const [isShowMessage, setIsShowMessage] = useState(false);
+	const [isUploadOrGetImage, setIsUploadOrGetImage] = useState(false);
 
 	useEffect(() => {
 		setAnnotation({});
@@ -132,7 +139,6 @@ export function Part1() {
 		} else if (paramsSeriesInstanceUID !== 'noId') {
 			setSeriesInstanceUID(paramsSeriesInstanceUID);
 			(async () => {
-				message.loading('正在获取镜像, 时间略长~', 0);
 				const resFileINFO = await getSeriesInfo(paramsSeriesInstanceUID);
 				const { accessionNumber, modality, patientAge, patientId, patientName, patientSex, studyDate, instanceNumbers } = resFileINFO.status === 200 ? resFileINFO.data : {};
 				const instanceNumber = JSON.parse(instanceNumbers || '[]');
@@ -145,8 +151,11 @@ export function Part1() {
 					PatientID: patientId,
 					StudyDate: studyDate
 				});
-				const res = instanceNumber.map((item) => getFile(paramsSeriesInstanceUID, item));
-				const resInfo = await Promise.all(res);
+				setCount(0);
+				setTotalCount(instanceNumber.length);
+				setIsShowMessage(true);
+				const resInfo = await concurrencyRequest(instanceNumber, 5, setCount, getFile, paramsSeriesInstanceUID)
+				setIsShowMessage(false);
 				const files = [];
 				resInfo.forEach(item => {
 					const blob = new Blob([item]);
@@ -154,7 +163,6 @@ export function Part1() {
 					files.push(file);
 				})
 				loadImage(files);
-				message.destroy();
 				message.success('获取成功');
 				setIsUploadFile(true);
 				restoreData(paramsSeriesInstanceUID);
@@ -225,26 +233,30 @@ export function Part1() {
 	}
 
 	async function loadFiles(e) {
+		setIsUploadOrGetImage(true);
+		// fullScreen();
 		const files = e.target.files;
 		if (files.length === 0) return;
-		const [formDataArr] = filter(files);
-
+		const [formDataArr] = filter(files, 1);
 		clearAllAnnotations();
 
-		message.loading('上传中，时间略长', 0)
-		const resArr = formDataArr.map((item) => uploadFile(item));
-		const res = await Promise.all(resArr);
-		const isSuccess = res.every(item => item.status === 200);
+		setTotalCount(formDataArr.length);
+		setIsShowMessage(true);
 
-		message.destroy();
+		const res = await concurrencyRequest(formDataArr, 5, setCount, uploadFile);
+		const isSuccess = res.every(item => item.status === 200);
+		setIsShowMessage(false);
 		if (isSuccess) {
-			message.success('上传成功');
 			// 本地读取文件 并且显示
 			loadImage(files)
 
 			const seriesInstanceUID = res[0].data[0].seriesInstanceUID;
 			setSeriesInstanceUID(seriesInstanceUID);
 			const resFileINFO = await getSeriesInfo(seriesInstanceUID);
+			if (resFileINFO.status !== 200) {
+				return message.error(resFileINFO.msg || '上传失败');
+			}
+			message.success('上传成功');
 			const { accessionNumber, modality, patientAge, patientId, patientName, patientSex, studyDate } = resFileINFO.status === 200 ? resFileINFO.data : {};
 			setPatientInfo({
 				AccessionNumber: accessionNumber,
@@ -430,6 +442,12 @@ export function Part1() {
 	const { AccessionNumber, Modality, PatientAddress, PatientAge, PatientID, PatientName, StudyDate } = patientInfo;
 	return (
 		<div className="Part1">
+			<MessageCom
+				currentCount={count}
+				totalCount={totalCount}
+				isShow={isShowMessage}
+				isUploadFile={isUploadOrGetImage}
+			/>
 			<Header />
 			<div className="toolBar">
 				<BasicFunBtn title='滚动切片' iconCode='&#xe6f6;' onClick={chooseTool("StackScrollMouseWheel")} />

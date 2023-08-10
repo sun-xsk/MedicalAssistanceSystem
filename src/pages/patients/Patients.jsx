@@ -130,17 +130,21 @@ export function Patients() {
 		setLoading(false);
 	};
 
+	const getContent = async (pageNum, pageSize = 10) => {
+		setLoading(true);
+		const res = await getMainShow({ pageNum, pageSize });
+		if (res && res.status === 200) {
+			setDataList({ rows: res.data.rows, total: res.data.total });
+			setSearchDataList({ rows: res.data.rows, total: res.data.total });
+			setLoading(false);
+		} else {
+			// message.error('网络出现错误')
+		}
+	}
+
 	useEffect(() => {
 		(async () => {
-			setLoading(true);
-			const res = await getMainShow({});
-			if (res && res.status === 200) {
-				setDataList({ rows: res.data.rows, total: res.data.total });
-				setSearchDataList({ rows: res.data.rows, total: res.data.total });
-				setLoading(false);
-			} else {
-				// message.error('网络出现错误')
-			}
+			await getContent();
 		})();
 	}, []);
 
@@ -188,6 +192,7 @@ export function Patients() {
 						loading={loading}
 						columns={columns}
 						rowClassName={"patientTableRow"}
+						style={{ backgroundColor: '#242c38' }}
 						dataSource={searchDataList.rows.map((item, index) => ({
 							...item,
 							key: index + 1,
@@ -199,7 +204,9 @@ export function Patients() {
 							total: searchDataList.total,
 							showTotal: (total) => <span>{`共 ${total} 条`}</span>,
 							showQuickJumper: true,
-							onChange: () => { },
+							onChange: async (e) => {
+								await getContent(e);
+							},
 							onShowQuickJump: (page) => {
 								console.log(page);
 							},

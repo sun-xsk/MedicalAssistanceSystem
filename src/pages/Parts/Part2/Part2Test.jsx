@@ -7,7 +7,8 @@ import {
 	extend,
 	getImagePixelModule,
 	metaDataProvider,
-	filter
+	filter,
+	concurrencyRequest
 } from "@/util/js";
 
 import { uploadFile, getFileInfo } from "@/util/api/httpUtil";
@@ -15,6 +16,7 @@ import { message } from "antd";
 import Header from "../Header/Header";
 import "./Part2Test.scss";
 import { getFile, getSeriesInfo } from "../../../util/api";
+import { MessageCom } from "../../../components";
 
 const toolState = {};
 
@@ -22,7 +24,6 @@ let activeToolName = ""; // 激活工具名称
 let prevToolName = ""; // 上一个激活工具名称
 
 export function Part2Test() {
-	const [ids, setIds] = useState([]);
 	//是否显示图片
 	const [isShow, setIsShow] = useState(false);
 	//鼠标坐标位置
@@ -36,6 +37,11 @@ export function Part2Test() {
 	const [messageApi, contextHolder] = message.useMessage();
 	const params = useParams();
 	const paramsSeriesInstanceUID = params?.seriesInstanceUID || "";
+
+	const [count, setCount] = useState(0);
+	const [totalCount, setTotalCount] = useState(0);
+	const [isShowMessage, setIsShowMessage] = useState(false);
+	const [isUploadOrGetImage, setIsUploadOrGetImage] = useState(false);
 
 	const fileRef = useRef(null);
 	const imgRef = useRef(null);
@@ -132,16 +138,18 @@ export function Part2Test() {
 	}
 	//   加载图片
 	async function loadFiles(e) {
+		setIsUploadOrGetImage(true);
 		const files = e.target.files;
 		if (files.length === 0) return;
-		const [formDataArr] = filter(files);
+		const [formDataArr] = filter(files, 1);
 
-		message.loading('上传中，时间略长', 0)
-		const resArr = formDataArr.map((item) => uploadFile(item));
-		const res = await Promise.all(resArr);
+		setTotalCount(formDataArr.length);
+		setIsShowMessage(true);
+
+		const res = await concurrencyRequest(formDataArr, 5, setCount, uploadFile);
 		const isSuccess = res.every(item => item.status === 200);
+		setIsShowMessage(false);
 
-		message.destroy();
 		if (isSuccess) {
 			message.success('上传成功');
 			// 本地读取文件 并且显示
@@ -234,12 +242,7 @@ export function Part2Test() {
 		extend();
 		if (paramsSeriesInstanceUID !== "noId") {
 			(async () => {
-				messageApi.open({
-					key: "updatable",
-					type: "loading",
-					content: "正在获取镜像, 时间略长~",
-					duration: 0,
-				});
+
 				const resFileINFO = await getSeriesInfo(paramsSeriesInstanceUID);
 				const {
 					accessionNumber,
@@ -261,8 +264,12 @@ export function Part2Test() {
 					PatientID: patientId,
 					StudyDate: studyDate,
 				});
-				const res = instanceNumber.map((item) => getFile(paramsSeriesInstanceUID, item));
-				const resInfo = await Promise.all(res);
+
+				setCount(0);
+				setTotalCount(instanceNumber.length);
+				setIsShowMessage(true);
+				const resInfo = await concurrencyRequest(instanceNumber, 5, setCount, getFile, paramsSeriesInstanceUID)
+				setIsShowMessage(false);
 				const files = [];
 				resInfo.forEach(item => {
 					const blob = new Blob([item]);
@@ -270,11 +277,7 @@ export function Part2Test() {
 					files.push(file);
 				})
 				loadImage(files);
-				messageApi.open({
-					key: "updatable",
-					type: "success",
-					content: "获取成功",
-				});
+				message.success('获取成功');
 				setIsShow(true);
 			})();
 		}
@@ -443,7 +446,12 @@ export function Part2Test() {
 	const { init, cut } = clip();
 	return (
 		<div className="Part2Test">
-			{contextHolder}
+			<MessageCom
+				currentCount={count}
+				totalCount={totalCount}
+				isShow={isShowMessage}
+				isUploadFile={isUploadOrGetImage}
+			/>
 			<Header />
 			<div className="toolBar">
 				<div className="left">
