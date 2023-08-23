@@ -184,6 +184,10 @@ export function Part1() {
 				restoreData(paramsSeriesInstanceUID);
 			})()
 		}
+
+		return () => {
+			cornerstoneWADOImageLoader.wadouri.fileManager.purge();
+		}
 	}, []);
 
 	const getImageId = (seriesInstanceUID, instanceNumber) => {

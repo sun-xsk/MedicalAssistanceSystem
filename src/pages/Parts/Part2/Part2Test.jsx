@@ -152,6 +152,10 @@ export function Part2Test() {
 				}
 			)
 		}
+
+		return () => {
+			cornerstoneWADOImageLoader.wadouri.fileManager.purge();
+		}
 	}, [])
 
 	//   上传图片
