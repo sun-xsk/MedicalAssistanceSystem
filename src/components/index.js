@@ -1,1 +1,2 @@
-export * from './basicFunBtn'
+export * from './basicFunBtn';
+export * from './messageCom';

@@ -1,15 +1,23 @@
 import React, { useEffect, useState } from "react";
-import { Form, Input, DatePicker, Button, Table, ConfigProvider, message } from "antd";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { getMainShow } from "../../util/api/httpUtil";
+import {
+	Form,
+	Input,
+	DatePicker,
+	Button,
+	Table,
+	ConfigProvider,
+	message,
+} from "antd";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { numberToTime } from "@/util/js/numberToTime";
+import { getMainShow } from "@/util/api/httpUtil";
 import zhCN from "antd/es/locale/zh_CN";
 
 import "./patients.scss";
-import { numberToTime } from "../../util/js/numberToTime";
 
 export function Patients() {
-	//hooks
-	const location = useLocation();
+	const param = useParams();
+	const part = param?.cate || "part1";
 	const navigate = useNavigate();
 	const [loading, setLoading] = useState(false);
 	const [dataList, setDataList] = useState({ rows: [], total: 0 }); //全部数据
@@ -17,6 +25,8 @@ export function Patients() {
 
 	const { RangePicker } = DatePicker;
 	const [form] = Form.useForm();
+	const [isCheck, setIsCheck] = useState(true);
+
 	const columns = [
 		{
 			title: "#",
@@ -28,101 +38,118 @@ export function Patients() {
 			dataIndex: "patientId",
 			key: "patientId",
 			render: (_, val) => {
-				return val.patientId || '未知'
-			}
+				return val.patientId || "未知";
+			},
 		},
 		{
-			title: '患者姓名',
+			title: "患者姓名",
 			dataIndex: "patientName",
 			key: "patientName",
 			render: (_, val) => {
-				return val.patientName || '未知'
-			}
+				return val.patientName || "未知";
+			},
 		},
 		{
 			title: "性别",
 			dataIndex: "patientSex",
 			key: "patientSex",
 			render: (_, val) => {
-				return val.patientGender || '未知'
-			}
+				return val.patientGender || "未知";
+			},
 		},
 		{
 			title: "年龄",
 			dataIndex: "patientAge",
 			key: "patientAge",
 			render: (_, val) => {
-				return val.patientAge || '未知'
-			}
+				return val.patientAge || "未知";
+			},
 		},
 		{
 			title: "检查编号",
 			dataIndex: "seriesInstanceUID",
 			key: "seriesInstanceUID",
 			render: (_, val) => {
-				return val.seriesInstanceUID || '未知'
-			}
+				return val.seriesInstanceUID || "未知";
+			},
 		},
 		{
 			title: "类型",
 			dataIndex: "modality",
 			key: "modality",
 			render: (_, val) => {
-				return val.modality || '未知'
-			}
+				return val.modality || "未知";
+			},
 		},
 		{
 			title: "检查时间",
 			dataIndex: "studyDate",
 			key: "studyDate",
 			render: (_, val) => {
-				return numberToTime(val.studyDate) || '未知'
-			}
+				return numberToTime(val.studyDate) || "未知";
+			},
 		},
 		{
 			title: "检查描述",
 			dataIndex: "examDescription",
 			key: "examDescription",
 			render: (_, val) => {
-				return val.examDescription || '未知'
-			}
+				return val.examDescription || "未知";
+			},
+		},
+		{
+			title: "详情",
+			dataIndex: "detail",
+			key: "detail",
+			render: (_, val) => {
+				return (
+					<Button
+						onClick={() => {
+							navigate(`/${part}/${val.seriesInstanceUID}`);
+						}}
+					>
+						进入详细
+					</Button>
+				);
+			},
 		},
 	];
 
-	const onSearch = () => {
+	const onSearch = async (pageNum, pageSize = 10) => {
 		setLoading(true);
+		setIsCheck(true);
 		const fillData = form.getFieldsValue();
-		const sourceData = dataList.rows;
-		const fillTime = fillData.studyDate ? fillData.studyDate.map((time) => time.format("YYYYMMDD").toString()) : [];
-
-		const filiterData = sourceData.filter((item) => {
-			if (fillTime.length !== 0) {
-				if (item.studyDate < fillTime[0] || item.studyDate > fillTime[1]) return false;
-			}
-			for (const field in fillData) {
-				if (fillData[field] && field !== 'studyDate') {
-					const isPass = fillData[field] === item[field] ? true : false;
-					if (!isPass) return false;
-				}
-			}
-			return true;
-		})
-		setSearchDataList({ rows: filiterData, total: filiterData.length });
-		setLoading(false)
+		const fillTime = fillData.studyDate
+			? fillData.studyDate.map((time) => time.format("YYYYMMDD").toString())
+			: [];
+		delete fillData.studyDate;
+		fillData["startDate"] = fillTime[0];
+		fillData["endDate"] = fillTime[1];
+		fillData["pageNum"] = pageNum;
+		fillData["pageSize"] = pageSize;
+		const res = await getMainShow(fillData);
+		if (res.status === 200) {
+			setSearchDataList({ rows: res.data.rows, total: res.data.total });
+		}
+		setLoading(false);
 	};
+
+	const getContent = async (pageNum, pageSize = 10) => {
+		setLoading(true);
+		const res = await getMainShow({ pageNum, pageSize });
+		if (res && res.status === 200) {
+			setDataList({ rows: res.data.rows, total: res.data.total });
+			setSearchDataList({ rows: res.data.rows, total: res.data.total });
+			setLoading(false);
+		} else {
+			// message.error('网络出现错误')
+		}
+	}
 
 	useEffect(() => {
 		(async () => {
-			setLoading(true);
-			const res = await getMainShow();
-			if (res && res.status === 200) {
-				setDataList({ rows: res.data, total: res.data.length })
-				setSearchDataList({ rows: res.data, total: res.data.length });
-				setLoading(false);
-			} else {
-				message.error('网络出现错误')
-			}
-		})()
+			await getContent();
+		})();
 	}, []);
 
 	return (
@@ -132,16 +159,21 @@ export function Patients() {
 				<div className="patientSearchBoxWrapper">
 					<Form
 						name="filter"
-						onFinish={onSearch}
+						onFinish={() => {
+							onSearch();
+						}}
 						form={form}
 						className="patientSearchBox"
 					>
 						<Form.Item name={"patientId"}>
 							<Input name={"patientId"} placeholder="患者编号" />
 						</Form.Item>
-						<Form.Item name={"seriesInstanceUID"}>
-							<Input placeholder="检查编号" />
+						<Form.Item name={"patientName"}>
+							<Input name={"patientName"} placeholder="患者姓名" />
 						</Form.Item>
+						{/* <Form.Item name={"seriesInstanceUID"}>
+							<Input placeholder="检查编号" />
+						</Form.Item> */}
 						<Form.Item name={"studyDate"}>
 							<RangePicker format={"YYMMDD"} />
 						</Form.Item>
@@ -149,6 +181,7 @@ export function Patients() {
 						<Button
 							onClick={() => {
 								setSearchDataList(dataList);
+								setIsCheck(false);
 								form.resetFields();
 							}}
 						>
@@ -156,7 +189,7 @@ export function Patients() {
 						</Button>
 					</Form>
 					<Button>
-						<Link to={location.state} className="link">
+						<Link to={`/${part}/noId`} className="link">
 							本地上传
 						</Link>
 					</Button>
@@ -166,23 +199,21 @@ export function Patients() {
 						loading={loading}
 						columns={columns}
 						rowClassName={"patientTableRow"}
+						style={{ backgroundColor: '#242c38' }}
 						dataSource={searchDataList.rows.map((item, index) => ({
 							...item,
 							key: index + 1,
 							index: index + 1,
 						}))}
-						onRow={(record) => {
-							// return {
-							// 	onClick: () => navigate(location.state, { state: { record } }),
-							// };
-						}}
 						pagination={{
 							style: { padding: "0 16px" },
 							position: ["bottomLeft"],
-							total: dataList.total,
+							total: searchDataList.total,
 							showTotal: (total) => <span>{`共 ${total} 条`}</span>,
 							showQuickJumper: true,
-							onChange: () => { },
+							onChange: async (e) => {
+								isCheck ? await onSearch(e) : await getContent(e);
+							},
 							onShowQuickJump: (page) => {
 								console.log(page);
 							},

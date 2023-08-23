@@ -30,8 +30,8 @@ export const getAnnotation = (seriesInstanceUID) =>
 	Get(`/label/getInfo?seriesInstanceUID=${seriesInstanceUID}`)
 
 // 下载文件
-export const getFile = () =>
-	Get(`/file/getFile`)
+export const getFile = (instanceNumber, seriesInstanceUID) =>
+	Get(`/file/getFile?seriesInstanceUID=${seriesInstanceUID}&instanceNumber=${instanceNumber}`, {}, 'arraybuffer')
 
 //获取dicom文件，instanceNumber文件序列号，seriesInstanceUID序列uid
 export const getDicomFile = (seriesInstanceUID, instanceNumber) =>
@@ -41,10 +41,9 @@ export const getDicomFile = (seriesInstanceUID, instanceNumber) =>
 	});
 
 //获取窗口信息
-export const getMainShow = (filedata) =>
-	Post("/file/getMainShow", filedata, "", {
-		"Content-Type": "multipart/form-data",
-	});
+export const getMainShow = (params) =>
+	Post("/file/getMainShow", params);
+
 
 //获取病人信息  参数dicom文件
 export const getFileInfo = (filedata) =>

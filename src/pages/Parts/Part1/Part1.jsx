@@ -4,56 +4,23 @@ import {
 	cornerstone,
 	cornerstoneWADOImageLoader,
 	cornerstoneTools,
-	mergeToolState
+	filter,
+	concurrencyRequest,
 } from "@/util/js";
-
+import Item from './Item/Item'
 import {
 	uploadFile
 } from "@/util/api";
-
 import myStore, {
 	addLabeltoState
 } from "@/util/store/store";
 import Header from "../Header/Header";
-import Detail from "./Detail/Detail";
 import "./Part1.scss";
 import { BasicFunBtn } from "@/components";
-import { getAnnotation, getSeriesInfo, saveAnnotationFun } from "../../../util/api";
-
-// const mouseToolChain = [
-// 	{
-// 		name: "StackScrollMouseWheel",
-// 		func: cornerstoneTools.StackScrollMouseWheelTool,
-// 		config: {},
-// 	},
-// 	{ name: "Wwwc", func: cornerstoneTools.WwwcTool, config: {} },
-// 	{
-// 		name: "ZoomMouseWheel",
-// 		func: cornerstoneTools.ZoomMouseWheelTool,
-// 		config: {},
-// 	},
-// 	{ name: "Pan", func: cornerstoneTools.PanTool, config: {} },
-// 	{ name: "Magnify", func: cornerstoneTools.MagnifyTool, config: {} },
-// 	{ name: "Angle", func: cornerstoneTools.AngleTool, config: {} },
-// 	{ name: "Length", func: cornerstoneTools.LengthTool, config: {} },
-// 	{ name: "Eraser", func: cornerstoneTools.EraserTool, config: {} },
-// 	{
-// 		name: "CircleScissors",
-// 		func: cornerstoneTools.CircleScissorsTool,
-// 		config: {},
-// 	},
-// 	{
-// 		name: "RectangleScissors",
-// 		func: cornerstoneTools.RectangleScissorsTool,
-// 		config: {},
-// 	},
-// 	{
-// 		name: "FreehandScissors",
-// 		func: cornerstoneTools.FreehandScissorsTool,
-// 		config: {},
-// 	},
-// 	{ name: "Brush", func: cornerstoneTools.BrushTool },
-// ];
+import { getAnnotation, getFile, getSeriesInfo, saveAnnotationFun } from "../../../util/api";
+import { useParams } from "react-router-dom";
+import { DetailContainer } from "./DetailContainer";
+import { MessageCom } from "../../../components";
 
 let activeToolName = ""; // 激活工具名称
 let prevToolName = ""; // 上一个激活工具名称
@@ -79,13 +46,23 @@ function marker() {
 export function Part1() {
 	const fileRef = useRef(null);
 	const imgRef = useRef(null);
-	const picRef = useRef(null);
-	const [messageApi, contextHolder] = message.useMessage();
+	const params = useParams();
+	// 得到左侧元素设置 scrollTop
+	const leftDom = useRef(null);
+	const paramsSeriesInstanceUID = params?.seriesInstanceUID || '';
 	const [viewPort, setViewPort] = useState({});
 	// 位置信息
 	const [position, setPosition] = useState({ x: 0, y: 0 });
 	// 四个角显示的信息
-	const [patientInfo, setPatientInfo] = useState({ PatientName: '', PatientID: '', PatientAge: '', PatientAddress: '', Modality: '', StudyDate: '', AccessionNumber: 0 });
+	const [patientInfo, setPatientInfo] = useState({
+		PatientName: '',
+		PatientID: '',
+		PatientAge: '',
+		PatientAddress: '',
+		Modality: '',
+		StudyDate: '',
+		AccessionNumber: 0
+	});
 	// 是否上传了文件
 	const [isUploadFile, setIsUploadFile] = useState(false);
 	// 看意思是存储右侧信息
@@ -94,13 +71,29 @@ export function Part1() {
 	const [isAddTool, setIsAllTool] = useState({});
 	// 记录seriesInstanceUID
 	const [seriesInstanceUID, setSeriesInstanceUID] = useState('');
+	// 记录所有标注
+	const [annotation, setAnnotation] = useState({});
+	const [count, setCount] = useState(0);
+	const [totalCount, setTotalCount] = useState(0);
+	const [isShowMessage, setIsShowMessage] = useState(false);
+	const [isUploadOrGetImage, setIsUploadOrGetImage] = useState(false);
+	// 记录所有 imageId
+	const [allImageId, setAllImageId] = useState([]);
+	// 设置当前的 序列号
+	const [curIndex, setCurIndex] = useState(0);
 
 	useEffect(() => {
+		setAnnotation({});
 		cornerstone.enable(imgRef.current);
+
 		setDetails(myStore.getState().labelDetails);
 		myStore.subscribe(() => {
 			const newLableDetails = myStore.getState().labelDetails;
+			// console.log('newLableDetails', newLableDetails);
 			setDetails(e => Array.from(new Set([...e, ...newLableDetails])));
+			// const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
+			// const nowToolState = toolStateManager.toolState;
+			// setDetails(nowToolState);
 		});
 
 		//添加绘图事件
@@ -128,6 +121,16 @@ export function Part1() {
 			}
 		);
 
+		imgRef.current.addEventListener(
+			cornerstoneTools.EVENTS.STACK_SCROLL,
+			(e) => {
+				setCurIndex(e.detail.newImageIdIndex || 0);
+				if (leftDom.current) {
+					leftDom.current.scrollTop = e.detail.newImageIdIndex * 200;
+				}
+			}
+		)
+
 		setViewPort((viewPort) => ({
 			...viewPort,
 			voi: { windowWidth: "", windowCenter: "" },
@@ -135,9 +138,57 @@ export function Part1() {
 		}));
 	}, []);
 
-	// useEffect(() => {
-	//   console.log(details);
-	// }, [details])
+	useEffect(() => {
+		if (imgRef.current && isUploadFile) {
+			setAnnotationInLocal();
+		}
+	}, [details])
+
+	// 适用于从已有的获取
+	useEffect(() => {
+		setAnnotation({});
+		const files = sessionStorage.getItem('files');
+		const seriesInstanceUID = sessionStorage.getItem('seriesInstanceUID');
+		if ((files && paramsSeriesInstanceUID !== 'noId' && seriesInstanceUID === paramsSeriesInstanceUID) ||
+			(files && paramsSeriesInstanceUID === 'noId')) {
+			loadImage(JSON.parse(files));
+		} else if (paramsSeriesInstanceUID !== 'noId') {
+			setSeriesInstanceUID(paramsSeriesInstanceUID);
+			(async () => {
+				const resFileINFO = await getSeriesInfo(paramsSeriesInstanceUID);
+				const { accessionNumber, modality, patientAge, patientId, patientName, patientSex, studyDate, instanceNumbers } = resFileINFO.status === 200 ? resFileINFO.data : {};
+				const instanceNumber = JSON.parse(instanceNumbers || '[]');
+				setPatientInfo({
+					AccessionNumber: accessionNumber,
+					PatientName: patientName,
+					PatientSex: patientSex,
+					Modality: modality,
+					PatientAge: patientAge,
+					PatientID: patientId,
+					StudyDate: studyDate
+				});
+				setCount(0);
+				setTotalCount(instanceNumber.length);
+				setIsShowMessage(true);
+				const resInfo = await concurrencyRequest(instanceNumber, 5, setCount, getFile, paramsSeriesInstanceUID)
+				setIsShowMessage(false);
+				const files = [];
+				resInfo.forEach(item => {
+					const blob = new Blob([item]);
+					const file = new File([blob], 'name');
+					files.push(file);
+				})
+				loadImage(files);
+				message.success('获取成功');
+				setIsUploadFile(true);
+				restoreData(paramsSeriesInstanceUID);
+			})()
+		}
+
+		return () => {
+			cornerstoneWADOImageLoader.wadouri.fileManager.purge();
+		}
+	}, []);
 
 	const getImageId = (seriesInstanceUID, instanceNumber) => {
 		return (
@@ -181,9 +232,19 @@ export function Part1() {
 	function uploadFiles() {
 		fileRef.current.click();
 	}
-	let imageIds = [];
 
-	async function loadImage() {
+	async function loadImage(files) {
+		const imageIds = [];
+
+		Array.from(files).forEach((file) => {
+			const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+			imageIds.push(imageId);
+			setAllImageId(preState => {
+				preState.push(imageId);
+				return preState;
+			})
+		});
+
 		const image = await cornerstone.loadImage(imageIds[0]);
 		cornerstoneTools.addStackStateManager(imgRef.current, ["stack"]);
 		const stack = {
@@ -196,27 +257,30 @@ export function Part1() {
 	}
 
 	async function loadFiles(e) {
+		setIsUploadOrGetImage(true);
+		// fullScreen();
 		const files = e.target.files;
-		const formdata = new FormData();
+		if (files.length === 0) return;
+		const [formDataArr] = filter(files, 1);
+		clearAllAnnotations();
 
-		Array.from(files).forEach((file) => {
-			formdata.append('files', file);
-		});
+		setTotalCount(formDataArr.length);
+		setIsShowMessage(true);
 
-		messageApi.open({ key: 'updatable', type: 'loading', content: '上传中, 时间略长~', duration: 0 });
-		const res = await uploadFile(formdata);
-		if (res && res.status === 200) {
-			messageApi.open({ key: 'updatable', type: 'success', content: '上传成功' });
-			//本地读取文件 并且显示
-			Array.from(files).forEach((file) => {
-				const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
-				imageIds.push(imageId);
-				loadImage()
-			});
+		const res = await concurrencyRequest(formDataArr, 5, setCount, uploadFile);
+		const isSuccess = res.every(item => item.status === 200);
+		setIsShowMessage(false);
+		if (isSuccess) {
+			// 本地读取文件 并且显示
+			loadImage(files)
 
-			const seriesInstanceUID = res.data[0].seriesInstanceUID;
+			const seriesInstanceUID = res[0].data[0].seriesInstanceUID;
 			setSeriesInstanceUID(seriesInstanceUID);
 			const resFileINFO = await getSeriesInfo(seriesInstanceUID);
+			if (resFileINFO.status !== 200) {
+				return message.error(resFileINFO.msg || '上传失败');
+			}
+			message.success('上传成功');
 			const { accessionNumber, modality, patientAge, patientId, patientName, patientSex, studyDate } = resFileINFO.status === 200 ? resFileINFO.data : {};
 			setPatientInfo({
 				AccessionNumber: accessionNumber,
@@ -236,18 +300,26 @@ export function Part1() {
 			sessionStorage.setItem("FILE_PATH", JSON.stringify(filePaths));
 			setIsUploadFile(true);
 		} else {
-			messageApi.open({ key: 'updatable', type: 'error', content: '上传失败' });
+			message.error('上传失败');
 		}
+	}
+
+	async function setAnnotationInLocal() {
+		const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
+		const nowToolState = toolStateManager.toolState;
+		setAnnotation(nowToolState);
 	}
 
 	async function saveAnnotation() {
 		if (seriesInstanceUID !== '') {
-			const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
-			const nowToolState = toolStateManager.toolState;
-			if (JSON.stringify(nowToolState) === '{}') {
+			console.log('annotation', annotation)
+			// const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
+			// const nowToolState = toolStateManager.toolState;
+			if (JSON.stringify(annotation) === '{}') {
 				return message.info('当前没有批注');
 			}
-			const label = JSON.stringify(nowToolState);
+			console.log('saving annotation', annotation);
+			const label = JSON.stringify(annotation);
 			const res = await saveAnnotationFun(seriesInstanceUID, label);
 			if (res.status === 200) {
 				message.success('成功保存标记');
@@ -257,21 +329,35 @@ export function Part1() {
 		}
 	}
 
-	async function restoreData() {
+	// 清楚所有标注
+	function clearAllAnnotations() {
+		if (imgRef.current) {
+			const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
+			const toolState = toolStateManager.toolState;
+			for (const imageId in toolState) {
+				toolStateManager.clearImageIdToolState(imageId)
+			}
+			// 刷新图像
+			cornerstone.updateImage(imgRef.current);
+
+		}
+	}
+
+	// 还原标注
+	async function restoreData(seriesInstanceUID) {
 		if (imgRef.current && seriesInstanceUID !== '') {
 			const res = await getAnnotation(seriesInstanceUID);
 			if (res.status === 200) {
-				const annotation = JSON.parse(res.data.label);
-				const newLabel = [];
-				if (JSON.stringify(annotation) === '{}') return message.info('没有要还原的标注');
+				const toolState = JSON.parse(res.data.label);
+				if (JSON.stringify(toolState) === '{}') return message.info('没有要还原的标注');
 				const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
-				const curAnnotation = toolStateManager.toolState;
-				const toolState = mergeToolState(annotation, curAnnotation);
+				// 清除之前的标注
+				clearAllAnnotations();
+
 				for (const imageId in toolState) {
 					for (const toolName in toolState[imageId]) {
 						const data = [...toolState[imageId][toolName].data];
 						for (const dataIndex in data) {
-							newLabel.push(data[dataIndex]);
 							const activeToolName = toolName + "Tool";
 							if (!isAddTool[activeToolName]) {
 								// 不能重复 addTool
@@ -282,6 +368,8 @@ export function Part1() {
 								);
 								setIsAllTool(e => ({ ...e, [activeToolName]: true }));
 							}
+
+							console.log('toolStateManager.addImageIdToolState', toolStateManager.addImageIdToolState)
 							toolStateManager.addImageIdToolState(imageId, toolName, data[dataIndex]);
 							cornerstoneTools.setToolActiveForElement(imgRef.current, toolName, {
 								mouseButtonMask: 1,
@@ -290,8 +378,12 @@ export function Part1() {
 						}
 					}
 				}
-				setDetails(e => [...newLabel]);
+
+				setAnnotation(toolState)
+				cornerstone.updateImage(imgRef.current);
 				message.success('还原标注成功');
+			} else if (!res.data) {
+				message.info(res.msg || '信息为空');
 			}
 		}
 	}
@@ -374,7 +466,12 @@ export function Part1() {
 	const { AccessionNumber, Modality, PatientAddress, PatientAge, PatientID, PatientName, StudyDate } = patientInfo;
 	return (
 		<div className="Part1">
-			{contextHolder}
+			<MessageCom
+				currentCount={count}
+				totalCount={totalCount}
+				isShow={isShowMessage}
+				isUploadFile={isUploadOrGetImage}
+			/>
 			<Header />
 			<div className="toolBar">
 				<BasicFunBtn title='滚动切片' iconCode='&#xe6f6;' onClick={chooseTool("StackScrollMouseWheel")} />
@@ -403,16 +500,15 @@ export function Part1() {
 				<button className="saveTool" onClick={() => saveAnnotation()}>
 					<div className="txt">保存标注</div>
 				</button>
-				<button className="rev" onClick={() => { restoreData() }}>还原标注</button>
+				<button className="rev" onClick={() => { restoreData(seriesInstanceUID) }}>还原标注</button>
 			</div>
 
 			<div className="p-detail">
 				<div className="p-picList">
-					<div className="showPic">
-						{/* {data.map((item, index) => {
-              return <Item key={index} data={item}></Item>
-            })}
-						<div className="pic" ref={picRef}></div>; */}
+					<div className="showPic" ref={leftDom}>
+						{allImageId.map((item, index) => {
+							return <Item key={index} data={item} curIndex={curIndex} ele={imgRef.current}></Item>
+						})}
 					</div>
 				</div>
 
@@ -425,11 +521,14 @@ export function Part1() {
 
 					{isUploadFile ? (
 						<div className="position">
+							<span>{curIndex + 1}/{allImageId.length}</span>
+							<br />
 							<span>X:{position.x}</span>
 							&nbsp;
 							<span>Y:{position.y}</span>
 						</div>
 					) : null}
+
 					{isUploadFile ? (
 						<div className="viewPort">
 							<div>Zoom:{Math.floor(viewPort.scale * 100)}%</div>
@@ -487,16 +586,16 @@ export function Part1() {
 						<div className="tagTitles">
 							<div className="tag0"></div>
 							<div className="tag1">序号</div>
-							<div className="tag2">工具类型</div>
+							<div className="tag2">标签名</div>
 							<div className="tag3">测量值</div>
 							{/* <div className="tag4">平均CT值</div> */}
 						</div>
 						<div className="tagDetails">
-							{details.map((detail, index) => {
-								return (
-									<Detail detail={detail} index={index} key={`key-${index}`} />
-								);
-							})}
+							<DetailContainer
+								toolState={annotation}
+								setAnnotation={setAnnotation}
+								element={imgRef.current}
+							/>
 						</div>
 					</div>
 				</div>

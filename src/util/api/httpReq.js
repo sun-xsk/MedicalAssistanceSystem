@@ -1,10 +1,14 @@
 import axios from "axios";
 import { message } from "antd";
 
+// pro: 10.19.0.26:51010
+// dev: 49.232.238.116:8001
+const BASEURL = process.env.NODE_ENV === 'dev' ? '/api' : 'http://10.19.0.26:51010/MedicalSystem';
+
 const instance = axios.create({
-  baseURL: "/api",
-  withCredentials: true,
-  timeout: 100000,
+  baseURL: BASEURL,
+  // withCredentials: true,kja
+  // timeout: 100000,
 });
 
 const handleNetError = (errStatus) => {
@@ -62,17 +66,20 @@ instance.interceptors.response.use(
     return res.data;
   },
   (err) => {
-    handleNetError(err.response.status);
-    Promise.reject(err.response);
+    if (err.response && err.response.status) {
+      handleNetError(err.response.status);
+      Promise.reject(err.response);
+    }
   }
 );
 
-export const Get = (url, params) => {
+export const Get = (url, params, responseType) => {
   return new Promise((resolve, reject) => {
     instance({
       method: 'get',
       url,
-      params
+      params,
+      responseType
     }).then((result) => {
       resolve(result);
     })
