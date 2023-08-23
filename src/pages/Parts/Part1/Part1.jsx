@@ -6,8 +6,8 @@ import {
 	cornerstoneTools,
 	filter,
 	concurrencyRequest,
-	fullScreen
 } from "@/util/js";
+import Item from './Item/Item'
 import {
 	uploadFile
 } from "@/util/api";
@@ -47,6 +47,8 @@ export function Part1() {
 	const fileRef = useRef(null);
 	const imgRef = useRef(null);
 	const params = useParams();
+	// 得到左侧元素设置 scrollTop
+	const leftDom = useRef(null);
 	const paramsSeriesInstanceUID = params?.seriesInstanceUID || '';
 	const [viewPort, setViewPort] = useState({});
 	// 位置信息
@@ -75,6 +77,10 @@ export function Part1() {
 	const [totalCount, setTotalCount] = useState(0);
 	const [isShowMessage, setIsShowMessage] = useState(false);
 	const [isUploadOrGetImage, setIsUploadOrGetImage] = useState(false);
+	// 记录所有 imageId
+	const [allImageId, setAllImageId] = useState([]);
+	// 设置当前的 序列号
+	const [curIndex, setCurIndex] = useState(0);
 
 	useEffect(() => {
 		setAnnotation({});
@@ -114,6 +120,16 @@ export function Part1() {
 				}
 			}
 		);
+
+		imgRef.current.addEventListener(
+			cornerstoneTools.EVENTS.STACK_SCROLL,
+			(e) => {
+				setCurIndex(e.detail.newImageIdIndex || 0);
+				if (leftDom.current) {
+					leftDom.current.scrollTop = e.detail.newImageIdIndex * 200;
+				}
+			}
+		)
 
 		setViewPort((viewPort) => ({
 			...viewPort,
@@ -219,6 +235,10 @@ export function Part1() {
 		Array.from(files).forEach((file) => {
 			const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
 			imageIds.push(imageId);
+			setAllImageId(preState => {
+				preState.push(imageId);
+				return preState;
+			})
 		});
 
 		const image = await cornerstone.loadImage(imageIds[0]);
@@ -481,11 +501,10 @@ export function Part1() {
 
 			<div className="p-detail">
 				<div className="p-picList">
-					<div className="showPic">
-						{/* {data.map((item, index) => {
-              return <Item key={index} data={item}></Item>
-            })}
-						<div className="pic" ref={picRef}></div>; */}
+					<div className="showPic" ref={leftDom}>
+						{allImageId.map((item, index) => {
+							return <Item key={index} data={item} curIndex={curIndex} ele={imgRef.current}></Item>
+						})}
 					</div>
 				</div>
 
@@ -498,11 +517,14 @@ export function Part1() {
 
 					{isUploadFile ? (
 						<div className="position">
+							<span>{curIndex + 1}/{allImageId.length}</span>
+							<br />
 							<span>X:{position.x}</span>
 							&nbsp;
 							<span>Y:{position.y}</span>
 						</div>
 					) : null}
+
 					{isUploadFile ? (
 						<div className="viewPort">
 							<div>Zoom:{Math.floor(viewPort.scale * 100)}%</div>

@@ -10,6 +10,7 @@ import {
 	filter,
 	concurrencyRequest
 } from "@/util/js";
+import Item from "../Part1/Item/Item";
 
 import { uploadFile, getFileInfo } from "@/util/api/httpUtil";
 import { message } from "antd";
@@ -34,6 +35,8 @@ export function Part2Test() {
 		voi: { windowWidth: "", windowCenter: "" },
 		scale: 0,
 	});
+	// 得到左侧元素设置 scrollTop
+	const leftDom = useRef(null);
 	const [messageApi, contextHolder] = message.useMessage();
 	const params = useParams();
 	const paramsSeriesInstanceUID = params?.seriesInstanceUID || "";
@@ -51,6 +54,11 @@ export function Part2Test() {
 	let result = undefined; // 存储当前选中的 DCM文件解析后的 DataSet 对象
 	let fileImgId = ""; // 当前选中的 DCM文件 imageId
 	let imageIds = [];
+
+	// 记录所有 imageId
+	const [allImageId, setAllImageId] = useState([]);
+	// 设置当前的 序列号
+	const [curIndex, setCurIndex] = useState(0);
 
 	function chooseTool(name) {
 		return () => {
@@ -132,6 +140,20 @@ export function Part2Test() {
 		return metaDataProvider(type, imageId);
 	});
 
+	useEffect(() => {
+		if (imgRef.current) {
+			imgRef.current.addEventListener(
+				cornerstoneTools.EVENTS.STACK_SCROLL,
+				(e) => {
+					setCurIndex(e.detail.newImageIdIndex || 0);
+					if (leftDom.current) {
+						leftDom.current.scrollTop = e.detail.newImageIdIndex * 200;
+					}
+				}
+			)
+		}
+	}, [])
+
 	//   上传图片
 	function uploadFiles() {
 		fileRef.current.click();
@@ -187,6 +209,10 @@ export function Part2Test() {
 		Array.from(files).forEach((file) => {
 			const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
 			imageIds.push(imageId);
+			setAllImageId(preState => {
+				preState.push(imageId);
+				return preState;
+			})
 		});
 
 		const image = await cornerstone.loadImage(imageIds[0]);
@@ -242,7 +268,6 @@ export function Part2Test() {
 		extend();
 		if (paramsSeriesInstanceUID !== "noId") {
 			(async () => {
-
 				const resFileINFO = await getSeriesInfo(paramsSeriesInstanceUID);
 				const {
 					accessionNumber,
@@ -531,10 +556,10 @@ export function Part2Test() {
 			{/* 下面展示图片 */}
 			<div className="p-detail">
 				<div className="p-picList">
-					<div className="showPic">
-						{/* ids.map((item, index) => {
-							return <div key={index}></div>;
-						}) */}
+					<div className="showPic" ref={leftDom}>
+						{allImageId.map((item, index) => {
+							return <Item key={index} data={item} curIndex={curIndex} ele={imgRef.current}></Item>
+						})}
 					</div>
 				</div>
 				<div className="detailPicBox" onMouseMove={(e) => handleMouseMove(e)}>
@@ -548,6 +573,8 @@ export function Part2Test() {
 
 					{isShow ? (
 						<div className="position">
+							<span>{curIndex + 1}/{allImageId.length}</span>
+							<br />
 							<span>X:{position.x}</span>
 							&nbsp;
 							<span>Y:{position.y}</span>
