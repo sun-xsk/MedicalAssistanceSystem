@@ -25,6 +25,7 @@ export function Patients() {
 
 	const { RangePicker } = DatePicker;
 	const [form] = Form.useForm();
+	const [isCheck, setIsCheck] = useState(true);
 
 	const columns = [
 		{
@@ -114,8 +115,9 @@ export function Patients() {
 		},
 	];
 
-	const onSearch = async () => {
+	const onSearch = async (pageNum, pageSize = 10) => {
 		setLoading(true);
+		setIsCheck(true);
 		const fillData = form.getFieldsValue();
 		const fillTime = fillData.studyDate
 			? fillData.studyDate.map((time) => time.format("YYYYMMDD").toString())
@@ -123,6 +125,8 @@ export function Patients() {
 		delete fillData.studyDate;
 		fillData["startDate"] = fillTime[0];
 		fillData["endDate"] = fillTime[1];
+		fillData["pageNum"] = pageNum;
+		fillData["pageSize"] = pageSize;
 		const res = await getMainShow(fillData);
 		if (res.status === 200) {
 			setSearchDataList({ rows: res.data.rows, total: res.data.total });
@@ -155,7 +159,9 @@ export function Patients() {
 				<div className="patientSearchBoxWrapper">
 					<Form
 						name="filter"
-						onFinish={onSearch}
+						onFinish={() => {
+							onSearch();
+						}}
 						form={form}
 						className="patientSearchBox"
 					>
@@ -175,6 +181,7 @@ export function Patients() {
 						<Button
 							onClick={() => {
 								setSearchDataList(dataList);
+								setIsCheck(false);
 								form.resetFields();
 							}}
 						>
@@ -205,7 +212,7 @@ export function Patients() {
 							showTotal: (total) => <span>{`共 ${total} 条`}</span>,
 							showQuickJumper: true,
 							onChange: async (e) => {
-								await getContent(e);
+								isCheck ? await onSearch(e) : await getContent(e);
 							},
 							onShowQuickJump: (page) => {
 								console.log(page);

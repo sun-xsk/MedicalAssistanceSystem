@@ -3,7 +3,7 @@ import { message } from "antd";
 
 // pro: 10.19.0.26:51010
 // dev: 49.232.238.116:8001
-const BASEURL = process.env.NODE_ENV === 'dev' ? '/api' : 'http://49.232.238.116:8001/MedicalSystem';
+const BASEURL = process.env.NODE_ENV === 'dev' ? '/api' : 'http://10.19.0.26:51010/MedicalSystem';
 
 const instance = axios.create({
   baseURL: BASEURL,
