@@ -1,5 +1,5 @@
 import Home from "../pages/Home/Home";
-import { Part1, Part2, Part2Test, Part3, Part4 } from "../pages/Parts";
+import { Part1, Part2Test, Part3, Part4 } from "../pages/Parts";
 import { Patients } from "../pages/patients/Patients";
 import { Navigate } from "react-router-dom";
 

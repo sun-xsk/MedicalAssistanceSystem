@@ -121,6 +121,7 @@ export function Part1() {
 			}
 		);
 
+		// 监听 滚动划片功能，当鼠标滚动时，设置curIndex、scrollTop
 		imgRef.current.addEventListener(
 			cornerstoneTools.EVENTS.STACK_SCROLL,
 			(e) => {
@@ -312,13 +313,9 @@ export function Part1() {
 
 	async function saveAnnotation() {
 		if (seriesInstanceUID !== '') {
-			console.log('annotation', annotation)
-			// const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
-			// const nowToolState = toolStateManager.toolState;
 			if (JSON.stringify(annotation) === '{}') {
 				return message.info('当前没有批注');
 			}
-			console.log('saving annotation', annotation);
 			const label = JSON.stringify(annotation);
 			const res = await saveAnnotationFun(seriesInstanceUID, label);
 			if (res.status === 200) {
@@ -339,7 +336,6 @@ export function Part1() {
 			}
 			// 刷新图像
 			cornerstone.updateImage(imgRef.current);
-
 		}
 	}
 
@@ -369,7 +365,6 @@ export function Part1() {
 								setIsAllTool(e => ({ ...e, [activeToolName]: true }));
 							}
 
-							console.log('toolStateManager.addImageIdToolState', toolStateManager.addImageIdToolState)
 							toolStateManager.addImageIdToolState(imageId, toolName, data[dataIndex]);
 							cornerstoneTools.setToolActiveForElement(imgRef.current, toolName, {
 								mouseButtonMask: 1,

@@ -29,6 +29,3 @@ export function concurrencyRequest(requests, maxNum, setState, handleFunction, .
     }
   })
 }
-
-
-
