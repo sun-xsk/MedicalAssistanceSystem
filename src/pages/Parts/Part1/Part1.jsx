@@ -121,6 +121,7 @@ export function Part1() {
 			}
 		);
 
+		// 监听 滚动划片功能，当鼠标滚动时，设置curIndex、scrollTop
 		imgRef.current.addEventListener(
 			cornerstoneTools.EVENTS.STACK_SCROLL,
 			(e) => {
@@ -312,13 +313,9 @@ export function Part1() {
 
 	async function saveAnnotation() {
 		if (seriesInstanceUID !== '') {
-			console.log('annotation', annotation)
-			// const toolStateManager = cornerstoneTools.globalImageIdSpecificToolStateManager;
-			// const nowToolState = toolStateManager.toolState;
 			if (JSON.stringify(annotation) === '{}') {
 				return message.info('当前没有批注');
 			}
-			console.log('saving annotation', annotation);
 			const label = JSON.stringify(annotation);
 			const res = await saveAnnotationFun(seriesInstanceUID, label);
 			if (res.status === 200) {
@@ -339,7 +336,6 @@ export function Part1() {
 			}
 			// 刷新图像
 			cornerstone.updateImage(imgRef.current);
-
 		}
 	}
 
@@ -369,7 +365,6 @@ export function Part1() {
 								setIsAllTool(e => ({ ...e, [activeToolName]: true }));
 							}
 
-							console.log('toolStateManager.addImageIdToolState', toolStateManager.addImageIdToolState)
 							toolStateManager.addImageIdToolState(imageId, toolName, data[dataIndex]);
 							cornerstoneTools.setToolActiveForElement(imgRef.current, toolName, {
 								mouseButtonMask: 1,
@@ -481,11 +476,11 @@ export function Part1() {
 				<BasicFunBtn title='移动' iconCode='&#xeb70;' onClick={chooseTool("Pan")} />
 				<BasicFunBtn title='角度测量' iconCode='&#xe631;' onClick={chooseTool("Angle")} />
 				<BasicFunBtn title='长度测量' iconCode='&#xedda;' onClick={chooseTool("Length")} />
-				<BasicFunBtn title='橡皮擦' iconCode='&#xe606;' onClick={chooseTool("Eraser")} />
 				<BasicFunBtn title='圆形标注' iconCode='&#xe61b;' onClick={chooseTool("CircleRoi")} />
 				<BasicFunBtn title='矩形标注' iconCode='&#xe604;' onClick={chooseTool("RectangleRoi")} />
 				<BasicFunBtn title='自由标注' iconCode='&#xe6ec;' onClick={chooseTool("FreehandRoi")} />
 				<BasicFunBtn title='画笔工具' iconCode='&#xe670;' onClick={chooseTool("Brush")} />
+				<BasicFunBtn title='擦除' iconCode='&#xe606;' onClick={chooseTool("Eraser")} />
 
 				<button className="uploadTool" onClick={uploadFiles}>
 					<div className="txt">上传影像</div>
